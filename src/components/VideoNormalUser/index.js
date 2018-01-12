@@ -10,6 +10,7 @@ class VideoWrapper extends React.Component {
 
   state = {
     dataSource: [],
+    loading: true
   }
 
   getVideos = () => {
@@ -19,14 +20,15 @@ class VideoWrapper extends React.Component {
       success: (res) => {
         if (res) {
           let result = [];
-          res.uploadRecord.map(item => {
+          res.uploadRecord.map((item, index) => {
             result.push({
               ...item,
-              key: item.videoID
+              key: index
             })
           });
           this.setState({
-            dataSource: result
+            dataSource: result,
+            loading: false
           });
         }
       }
@@ -68,26 +70,6 @@ class VideoWrapper extends React.Component {
 
   }
 
-  onWatchVideo = (videoID, url) => {
-    $.ajax({
-      url: `/videos/${videoID}?userID=${userID}&url=${url}`,
-      contentType: "application/json",
-      statusCode: {
-        200: (xhr) => {
-          console.log("播放成功！")
-          message.success('播放成功！');
-        },
-        500: (xhr) => {
-          console.log("播放失败！500")
-          message.error(`statusCode:500,播放失败！请确定你已购买该视频！`);
-        },
-        400: (xhr) => {
-          console.log("播放失败！400")
-          message.error(`statusCode:400,播放失败！请确定你已购买该视频！`);
-        }
-      },
-    });
-  }
 
   render() {
     const columns = [{
@@ -103,11 +85,6 @@ class VideoWrapper extends React.Component {
       dataIndex: 'status',
       key: 'status',
       render: text => text ? <Badge status="success" text="正常" /> : <Badge status="异常" />
-    }, {
-      title: 'transaction',
-      dataIndex: 'transaction',
-      key: 'transaction',
-      width: '35%',
     }, {
       title: 'url',
       dataIndex: 'url',
@@ -131,9 +108,7 @@ class VideoWrapper extends React.Component {
       key: 'option',
       render: (text, record) => (
         <span>
-          <a href="#" onClick={()=>{this.onBuyVideo(record.videoID,record.videoName)}}>购买</a>
-          <Divider type="vertical" />
-          <a href="#" onClick={()=>{this.onWatchVideo(record.videoID,record.url)}}>播放</a>
+          <a onClick={()=>{this.onBuyVideo(record.videoID,record.videoName)}}>购买</a>
         </span>
       ),
     }];
@@ -148,7 +123,7 @@ class VideoWrapper extends React.Component {
           <Col span={23} style={{fontSize:14+'px',marginTop:20+'px'}}>
           </Col>
           <Col span={23} style={{fontSize:14+'px',marginTop:0+'px'}}>
-            <Table dataSource={this.state.dataSource} columns={columns} />
+            <Table dataSource={this.state.dataSource} columns={columns} loading={this.state.loading} />
           </Col>
         </Row>
       </div>

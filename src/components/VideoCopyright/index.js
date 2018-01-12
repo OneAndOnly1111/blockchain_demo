@@ -10,6 +10,7 @@ class VideoWrapper extends React.Component {
   state = {
     dataSource: [],
     visible: false,
+    loading: true,
   }
 
   getVideos = () => {
@@ -19,14 +20,15 @@ class VideoWrapper extends React.Component {
       success: (res) => {
         if (res) {
           let result = [];
-          res.uploadRecord.map(item => {
+          res.uploadRecord.map((item, index) => {
             result.push({
               ...item,
-              key: item.videoID
+              key: index
             })
           });
           this.setState({
-            dataSource: result
+            dataSource: result,
+            loading: false
           });
         }
       }
@@ -129,11 +131,6 @@ class VideoWrapper extends React.Component {
       key: 'status',
       render: text => text ? <Badge status="success" text="正常" /> : <Badge status="异常" />
     }, {
-      title: 'transaction',
-      dataIndex: 'transaction',
-      key: 'transaction',
-      width: '35%',
-    }, {
       title: 'url',
       dataIndex: 'url',
       key: 'url',
@@ -156,7 +153,7 @@ class VideoWrapper extends React.Component {
       key: 'option',
       render: (text, record) => (
         <span>
-          <a href="#" onClick={()=>{this.onRemoveVideo(record.userID,record.videoID)}}>下架</a>
+          <a onClick={()=>{this.onRemoveVideo(record.userID,record.videoID)}}>下架</a>
         </span>
       ),
     }];
@@ -182,7 +179,7 @@ class VideoWrapper extends React.Component {
             <Button type="primary" icon="plus" onClick={this.showModal}>视频上传</Button>
           </Col>
           <Col span={23} style={{fontSize:14+'px',marginTop:24+'px'}}>
-            <Table dataSource={this.state.dataSource} columns={columns} />
+            <Table dataSource={this.state.dataSource} columns={columns} loading={this.state.loading} />
           </Col>
         </Row>
         <Modal

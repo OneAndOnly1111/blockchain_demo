@@ -10,7 +10,27 @@ class VideoWrapper extends React.Component {
 
   state = {
     dataSource: [],
-    visible: false,
+    loading: true
+  }
+
+  getAllVideos = () => {
+    $.ajax({
+      url: `/record/videos?indexType=uploadRecord&userID=${copyRightUserID}`,
+      contentType: 'application/json',
+      success: (res) => {
+        if (res) {
+          let result = [];
+          res.uploadRecord.map((item, index) => {
+            result.push({
+              ...item,
+              key: index
+            })
+          });
+          console.log("result", result)
+          return result;
+        }
+      }
+    })
   }
 
   getVideos = () => {
@@ -20,14 +40,32 @@ class VideoWrapper extends React.Component {
       success: (res) => {
         if (res) {
           let result = [];
-          res.transactions.map(item => {
-            result.push({
-              ...item,
-              key: item.videoID
-            })
-          });
-          this.setState({
-            dataSource: result
+          let allData = [];
+
+          $.ajax({
+            url: `/record/videos?indexType=uploadRecord&userID=${copyRightUserID}`,
+            contentType: 'application/json',
+            success: (data) => {
+              if (data) {
+                console.log("allData", data)
+                res.transactions.map((trans, index) => {
+                  data.uploadRecord.map(video => {
+                    if (trans.videoID == video.videoID) {
+                      trans.url = video.url;
+                    }
+                  });
+                  result.push({
+                    ...trans,
+                    key: index
+                  });
+                });
+                console.log("result", result)
+                this.setState({
+                  dataSource: result,
+                  loading: false
+                });
+              }
+            }
           });
         }
       }
@@ -38,74 +76,56 @@ class VideoWrapper extends React.Component {
     this.getVideos();
   }
 
-  showModal = () => {
-    this.setState({
-      visible: true,
-    });
-  }
-  handleOk = (e) => {
-    e.preventDefault();
-    this.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        $.ajax({
-          url: `/videos/${values.videoID}`,
-          type: 'post',
-          data: JSON.stringify({
-            userID: values.userID,
-            videoName: values.videoName,
-            url: values.url
-          }),
-          statusCode: {
-            200: (xhr) => {
-              console.log("上传成功！")
-              message.success('上传成功！');
-            },
-            500: (xhr) => {
-              console.log("上传失败！500")
-              message.error(`statusCode:500,上传失败！`);
-            },
-            400: (xhr) => {
-              console.log("上传失败！400")
-              message.error(`statusCode:400,上传失败！`);
-            }
-          },
-          success: (res) => {
-            if (res == {}) { message.success("上传成功！") };
-          },
-        });
-        this.getVideos();
-        this.setState({
-          visible: false,
-        });
-      }
-    });
-
-  }
-  handleCancel = (e) => {
-    this.setState({
-      visible: false,
+  onWatchVideo = (videoID, url) => {
+    $.ajax({
+      url: `/videos/${videoID}?userID=${userID}&url=${url}`,
+      contentType: "application/json",
+      statusCode: {
+        200: (xhr) => {
+          console.log("播放成功！")
+          message.success('播放成功！');
+        },
+        500: (xhr) => {
+          console.log("播放失败！500")
+          message.error(`statusCode:500,播放失败！请确定你已购买该视频！`);
+        },
+        400: (xhr) => {
+          console.log("播放失败！400")
+          message.error(`statusCode:400,播放失败！请确定你已购买该视频！`);
+        }
+      },
     });
   }
 
   render() {
     const columns = [{
-      title: 'buyTime',
-      dataIndex: 'buyTime',
-      key: 'buyTime',
-    }, {
-      title: 'transactionId',
-      dataIndex: 'transactionId',
-      key: 'transactionId',
-      render: text => text || '--'
-    }, {
       title: 'transaction',
       dataIndex: 'transaction',
       key: 'transaction',
-      width: '35%',
     }, {
       title: 'videoID',
       dataIndex: 'videoID',
       key: 'videoID',
+    }, {
+      title: 'url',
+      dataIndex: 'url',
+      key: 'url',
+    }, {
+      title: 'buyTime',
+      dataIndex: 'buyTime',
+      key: 'buyTime',
+    }, {
+      title: 'option',
+      dataIndex: 'option',
+      key: 'option',
+      render: (text, record) => (
+        <span>
+          {
+            record.videoID ? <a onClick={()=>{this.onWatchVideo(record.videoID,record.url)}}>播放</a>
+            :<a disabled>已下架</a>
+          }
+        </span>
+      ),
     }];
     const { getFieldDecorator } = this.props.form;
     const formItemLayout = {
@@ -128,68 +148,9 @@ class VideoWrapper extends React.Component {
           <Col span={23} style={{fontSize:14+'px',marginTop:20+'px'}}>
           </Col>
           <Col span={23} style={{fontSize:14+'px',marginTop:0+'px'}}>
-            <Table dataSource={this.state.dataSource} columns={columns} />
+            <Table dataSource={this.state.dataSource} columns={columns} loading={this.state.loading} />
           </Col>
         </Row>
-        <Modal
-          destroyOnClose
-          title="视频上传"
-          visible={this.state.visible}
-          onOk={this.handleOk}
-          onCancel={this.handleCancel}
-        >
-          <Form onSubmit={this.handleSubmit}>
-            <FormItem
-              {...formItemLayout}
-              label="userID"
-            >
-              {getFieldDecorator('userID', {
-                initialValue:userID,
-                rules: [{
-                  required: true, message: 'Please input your userID!',
-                }],
-                })(
-                  <Input />
-              )}
-            </FormItem>
-            <FormItem
-              {...formItemLayout}
-              label="videoID"
-            >
-               {getFieldDecorator('videoID', {
-                rules: [{
-                  required: true, message: 'Please input your videoID!',
-                }],
-                })(
-                  <Input />
-              )}
-            </FormItem>
-            <FormItem
-              {...formItemLayout}
-              label="videoName"
-            >
-              {getFieldDecorator('videoName', {
-                rules: [{
-                  required: true, message: 'Please input your videoName!',
-                }],
-                })(
-                  <Input />
-              )}
-            </FormItem>
-            <FormItem
-              {...formItemLayout}
-              label="url"
-            >
-              {getFieldDecorator('url', {
-                rules: [{
-                  required: true, message: 'Please input your url!',
-                }],
-                })(
-                  <Input />
-              )}
-            </FormItem>
-          </Form>
-        </Modal>
       </div>
     );
   }
