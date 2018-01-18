@@ -15,6 +15,11 @@ export default class App extends React.Component {
     })
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    console.log("shouldComponentUpdate---", nextProps, nextState);
+    return nextState.isAuthenticated ? true : false;
+  }
+
   render() {
     return (
       <Router>

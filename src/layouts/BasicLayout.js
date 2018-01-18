@@ -39,6 +39,11 @@ export default class BasicLayout extends React.Component {
     console.log("BasicLayout-Update!!!");
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    console.log("shouldComponentUpdate--basiclayout", nextProps, nextState);
+    return true
+  }
+
   render() {
     const { collapsed } = this.state;
     console.log("getRouterData", getRouterData(), "this.props.", this.props)
