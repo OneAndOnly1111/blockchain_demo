@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
-import { Layout, Menu, Icon, Spin, Tag, Dropdown, Avatar, Divider } from 'antd';
+import { Layout, Menu, Icon, Spin, Tag, Dropdown, Avatar, } from 'antd';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
 import styles from './index.less';
-import logo from '../../images/avatar.jpg';
+import avatar from '../../assets/avatar.jpg';
 const { Header } = Layout;
 const userID = "demo";
 export default class GlobalHeader extends PureComponent {
@@ -13,14 +13,23 @@ export default class GlobalHeader extends PureComponent {
     onCollapse(!collapsed);
   }
 
+  handleMenuClick = (item, key, keyPath) => {
+    if (item.key == "logout") {
+      this.props.subscribeAuth(false);
+      localStorage.removeItem("userID");
+      localStorage.removeItem("password");
+    }
+  }
+
   render() {
-    const { collapsed } = this.props;
+    console.log("props--header", this.props)
+    const { collapsed, subscribeAuth } = this.props;
     const menu = (
-      <Menu className={styles.menu} selectedKeys={[]}>
+      <Menu className={styles.menu} selectedKeys={[]} onClick={this.handleMenuClick}>
         <Menu.Item disabled><Icon type="user" />个人中心</Menu.Item>
         <Menu.Item disabled><Icon type="setting" />设置</Menu.Item>
         <Menu.Divider />
-        <Menu.Item key="logout" disabled><Icon type="logout" />退出登录</Menu.Item>
+        <Menu.Item key="logout"><Link to="/login"><Icon type="logout" />退出登录</Link></Menu.Item>
       </Menu>
     );
     return (
@@ -33,7 +42,7 @@ export default class GlobalHeader extends PureComponent {
         <div className={styles.right}>
           <Dropdown overlay={menu}>
               <span className={`${styles.action} ${styles.account}`}>
-                <Avatar size="small" className={styles.avatar} src={logo} />
+                <Avatar size="small" className={styles.avatar} src={avatar} />
                 <span className={styles.name}>{userID}</span>
               </span>
             </Dropdown>

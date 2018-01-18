@@ -1,105 +1,57 @@
 import React from "react";
-import { Layout, Menu, Icon } from 'antd';
-import { BrowserRouter as Router, Route, Switch, Redirect } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from "react-router-dom";
+import LoginLayout from "./layouts/LoginLayout";
+import BasicLayout from "./layouts/BasicLayout";
 import "./styles/main.css";
-import { getMenuData } from './common/menu';
-import SiderMenu from "./components/SiderMenu";
-import GlobalHeader from "./components/GlobalHeader";
-import GlobalFooter from "./components/GlobalFooter";
-import Login from "./components/Login";
-import NotFound from "./components/Exception/404";
-import Video from "./components/VideoCopyright";
-import VideoNormalUser from "./components/VideoNormalUser";
-import PurchaseRecord from "./components/VideoNormalUser/purchaseRecord"
-const { Header, Sider, Content, Footer } = Layout;
-/**
- * 根据菜单取得重定向地址.
- */
-const redirectData = [];
-const getRedirect = (item) => {
-  if (item && item.children) {
-    if (item.children[0] && item.children[0].path) {
-      redirectData.push({
-        from: `/${item.path}`,
-        to: `/${item.children[0].path}`,
-      });
-      item.children.forEach((children) => {
-        getRedirect(children);
-      });
-    }
-  }
-};
-getMenuData().forEach(getRedirect);
 
 export default class App extends React.Component {
-  componentDidUpdate(prevProps, prevState) {
-    console.log("APP-Update!!!");
-  }
-
   state = {
-    collapsed: false,
-  };
-  toggle = () => {
-    this.setState({
-      collapsed: !this.state.collapsed,
-    });
+    isAuthenticated: false,
   }
 
+  subscribeAuth = (auth) => {
+    this.setState({
+      isAuthenticated: auth
+    })
+  }
 
   render() {
-    const { collapsed } = this.state;
     return (
-      <div>
-        <Router>
-          <Layout>
-            <SiderMenu
-              menuData={getMenuData()}
-              collapsed={collapsed}
-            />
-            <Layout>
-              <GlobalHeader 
-                collapsed={collapsed}
-                onCollapse={this.toggle}
-              />
-              <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', minHeight: 280 }}>
-                <Switch>
-                  {
-                    redirectData.map(item =>
-                      <Redirect key={item.from} exact from={item.from} to={item.to} />
-                    )
-                  }
-                  <Route exact path='/' component={Video} />
-                  <Route exact path='/copyright' component={Video} />
-                  <Route exact path='/normalUser' component={VideoNormalUser} />
-                  <Route exact path='/purchaseRecord' component={PurchaseRecord} />
-                  <Route exact path='/user/login' component={Login} />
-                  <Route component={NotFound} />
-                </Switch>
-              </Content>
-              <GlobalFooter
-                links={[{
-                  title: '云熵官网',
-                  href: 'http://crazycdn.com',
-                  blankTarget: true,
-                }, {
-                  title: 'GitHub',
-                  href: 'https://github.com/oneandonly1111/console',
-                  blankTarget: true,
-                }, {
-                  title: 'Ant Design',
-                  href: 'http://ant.design',
-                  blankTarget: true,
-                }]}
-                copyright={
-                  <div>
-                    Copyright <Icon type="copyright" /> 2018 云熵网络科技技术部出品
-                  </div>
-                }
-              />
-            </Layout>
-          </Layout>
-        </Router>
-      </div>
+      <Router>
+        <div>
+          <Switch>
+             <PublicRoute path="/login" component={LoginLayout} subscribeAuth={this.subscribeAuth} />
+             <PrivateRoute path="/" isAuthenticated={this.state.isAuthenticated} component={BasicLayout} subscribeAuth={this.subscribeAuth} />
+          </Switch>
+        </div>
+      </Router>
     );
+  }
+}
+
+const PrivateRoute = ({ isAuthenticated, component: Component, subscribeAuth, ...rest }) => (
+<Route { ...rest } render={
+  props => (isAuthenticated ? (<Component {...props} subscribeAuth={subscribeAuth} />): (<Redirect to={{ pathname: '/login', state: { from: props.location }}}/>))
+}
+/>
+)
+
+const PublicRoute = ({ component: Component, subscribeAuth, ...rest }) => (
+<Route {...rest} render={
+  props => <Component {...props} subscribeAuth={subscribeAuth} />
+}
+/>
+)
+
+//暂时无需
+const fakeAuth = {
+  isAuthenticated: false,
+  authenticate(cb) {
+    this.isAuthenticated = true
+    setTimeout(cb, 100) // fake async
+  },
+  signout(cb) {
+    this.isAuthenticated = false
+    setTimeout(cb, 100)
   }
 }

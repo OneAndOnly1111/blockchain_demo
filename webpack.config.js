@@ -13,12 +13,12 @@ module.exports = {
 		historyApiFallback: true, //任意的 404 响应都可能需要被替代为 index.html
 		compress: true, //启用gzip 压缩
 		host: '0.0.0.0', //服务外部也可访问
-		port: 7070,
+		port: 8081,
 		proxy: {
-			'/videos': {
+			'/users': {
 				target: 'http://47.96.188.88:8080/',
 			},
-			'/users': {
+			'/videos': {
 				target: 'http://47.96.188.88:8080/',
 			},
 			'/transaction': {

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './index.less';
-import logo from '../../images/favicon.ico';
+import logo from '../../assets/logo.ico';
 import { getMenuData } from '../../common/menu';
 import { Layout, Menu, Icon, Switch } from 'antd';
 import $ from "jquery";
@@ -71,7 +71,7 @@ export default class SiderMenu extends React.Component {
   state = {
     menusData: getMenuData(),
     openKeys: [getUrl().openKeys],
-    SelectedKeys: [getUrl().SelectedKeys || 'copyright'],
+    SelectedKeys: [getUrl().SelectedKeys || 'video/upload'],
   }
 
   onOpenChange = (openKeys) => {
