@@ -16,7 +16,7 @@ const links = [{
   blankTarget: true,
 }, {
   title: 'GitHub',
-  href: 'https://github.com/oneandonly1111/console',
+  href: 'https://github.com/oneandonly1111/blockchain_demo',
   blankTarget: true,
 }, {
   title: 'Ant Design',
