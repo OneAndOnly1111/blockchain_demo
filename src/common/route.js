@@ -4,6 +4,7 @@ import { Route } from "react-router-dom";
 import VideoNormalUser from "../components/VideoNormalUser";
 // import PurchaseRecord from "../components/VideoNormalUser/purchaseRecord";
 import VideoUpload from "../components/Video/VideoUpload";
+import VideoRelease from "../components/Video/VideoRelease";
 import VideoPurchased from "../components/Video/VideoPurchased";
 
 const routerData = [{
@@ -18,7 +19,7 @@ const routerData = [{
   authority: true,
 }, {
   path: '/video/release',
-  component: null,
+  component: VideoRelease,
   exact: true,
   authority: true,
 }, {

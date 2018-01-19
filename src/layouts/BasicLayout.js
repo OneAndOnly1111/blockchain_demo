@@ -6,6 +6,26 @@ import GlobalHeader from "../components/GlobalHeader";
 import GlobalFooter from "../components/GlobalFooter";
 import NotFound from "../components/Exception/404";
 import { getRouterData } from "../common/route.js";
+import { getMenuData } from "../common/menu.js";
+
+/**
+ * 根据菜单取得重定向地址.
+ */
+const redirectData = [];
+const getRedirect = (item) => {
+  if (item && item.children) {
+    if (item.children[0] && item.children[0].path) {
+      redirectData.push({
+        from: `/${item.path}`,
+        to: `/${item.children[0].path}`,
+      });
+      item.children.forEach((children) => {
+        getRedirect(children);
+      });
+    }
+  }
+};
+getMenuData().forEach(getRedirect);
 
 
 const { Content } = Layout;
@@ -35,23 +55,22 @@ export default class BasicLayout extends React.Component {
     });
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    console.log("BasicLayout-Update!!!");
-  }
+  // componentDidUpdate(prevProps, prevState) {
+  //   this.props.subscribeAuth(true);
+  // }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    console.log("shouldComponentUpdate--basiclayout", nextProps, nextState);
-    return true
-  }
-
+  // shouldComponentUpdate(nextProps, nextState) {
+  //   console.log("sider-menu:BasicLayout", nextProps, nextState)
+  // }
   render() {
     const { collapsed } = this.state;
-    console.log("getRouterData", getRouterData(), "this.props.", this.props)
+    console.log("redirectData", redirectData);
     return (
       <div>
         <Layout>
           <SiderMenu
             collapsed={collapsed}
+            subscribeAuth={this.props.subscribeAuth}
           />
           <Layout>
             <GlobalHeader
@@ -61,6 +80,11 @@ export default class BasicLayout extends React.Component {
             />
             <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', minHeight: 280 }}>
               <Switch>
+                {
+                  redirectData.map(item =>
+                    <Redirect key={item.from} exact from={item.from} to={item.to} />
+                  )
+                }
                 {
                   getRouterData().map((route,index)=>(
                     <Route exact={route.exact} path={route.path} key={route.key||index} component={route.component} />

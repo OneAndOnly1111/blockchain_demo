@@ -15,9 +15,14 @@ export default class App extends React.Component {
     })
   }
 
+  // shouldComponentUpdate(nextProps, nextState) {
+  //   console.log("shouldComponentUpdate---", nextProps, nextState);
+  //   return nextState.isAuthenticated ? true : false;
+  // }
+
   shouldComponentUpdate(nextProps, nextState) {
-    console.log("shouldComponentUpdate---", nextProps, nextState);
-    return nextState.isAuthenticated ? true : false;
+    console.log("this.state.isAuthenticated", this.state.isAuthenticated, "nextState", nextState)
+    return this.state.isAuthenticated === nextState.isAuthenticated ? false : true
   }
 
   render() {
@@ -36,7 +41,7 @@ export default class App extends React.Component {
 
 const PrivateRoute = ({ isAuthenticated, component: Component, subscribeAuth, ...rest }) => (
 <Route { ...rest } render={
-  props => (isAuthenticated ? (<Component {...props} subscribeAuth={subscribeAuth} />): (<Redirect to={{ pathname: '/login', state: { from: props.location }}}/>))
+  props => (isAuthenticated? (<Component {...props} subscribeAuth={subscribeAuth} />): (<Redirect to={{ pathname: '/login', state: { from: props.location }}}/>))
 }
 />
 )

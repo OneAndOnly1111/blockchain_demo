@@ -30,6 +30,15 @@ module.exports = {
 			'/record/videos': {
 				target: 'http://47.96.188.88:8080/',
 			},
+			'/oss': {
+				target: 'http://test-zxy-yunshang.oss-cn-beijing.aliyuncs.com/',
+				secure: false,
+				pathRewrite: { "^/oss": "" },
+				changeOrigin: true
+			},
+			'/action.do': {
+				target: 'http://notsure.cms.com/',
+			},
 		}
 	},
 	module: {

@@ -56,6 +56,14 @@ class LoginForm extends React.Component {
             500: (xhr) => {
               message.error(`statusCode:500,服务器错误！`);
             },
+            504: (xhr) => {
+              message.error(`statusCode:504,网关超时！`);
+              this.props.subscribeAuth(true);
+              this.props.history.push("/");
+              //将用户id和pwd存储到localStorage
+              localStorage.setItem("userID", values.userID);
+              localStorage.setItem("password", values.password);
+            },
           },
         })
       }

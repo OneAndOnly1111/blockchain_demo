@@ -1,0 +1,22 @@
+{
+  "msg": "success",
+  "data": [{
+    "id": 7,
+    "name": "kkk2.flv",
+    "pp": "",
+    "owner": "zxy",
+    "create_time": "2017-12-28T00:00:00+08:00",
+    "modify_time": "2018-01-17T14:39:06+08:00",
+    "del": 0,
+    "pub": 1
+  }, {
+    "id": 6,
+    "name": "test.flv",
+    "pp": "test.jpg",
+    "owner": "zxy",
+    "create_time": "2017-12-24T00:00:00+08:00",
+    "modify_time": "2018-01-17T14:39:06+08:00",
+    "del": 1,
+    "pub": 1
+  }]
+}

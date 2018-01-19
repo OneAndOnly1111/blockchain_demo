@@ -89,14 +89,13 @@ export default class SiderMenu extends React.Component {
     return [getUrl().openKeys]
   }
 
-  onThemeChange = (check) => {
-    if (check) {
-      this.setState({ theme: 'dark' })
-    } else {
-      this.setState({ theme: 'light' })
-      styles.sider.background = '#fff'
-    }
-  }
+  // componentDidUpdate(prevProps, prevState) {
+  //   this.props.subscribeAuth(true);
+  // }
+
+  // shouldComponentUpdate(nextProps, nextState) {
+  //   console.log("sider-menu:nextState", nextProps, nextState)
+  // }
 
   render() {
     const { collapsed } = this.props;

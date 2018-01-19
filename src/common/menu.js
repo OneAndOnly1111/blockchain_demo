@@ -1,6 +1,6 @@
 let url = window.location.href;
 url = url.split("/")
-console.log("url", url[3]);
+console.log("common-muenu-url", url[3]);
 let path = url[3];
 const menuData = [{
   name: '视频上传',
