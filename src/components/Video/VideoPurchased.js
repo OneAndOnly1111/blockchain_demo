@@ -2,80 +2,90 @@ import React from "react";
 import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message } from "antd";
 import $ from "jquery";
 import styles from "./VideoPurchased.less";
+import { userID, password } from "../../utils/utils";
 const FormItem = Form.Item;
-const copyRightUserID = 1111111125;
-const userID = 10002;
+const dataSource = [{
+  key: 7,
+  id: 7,
+  name: "kkk2.flv",
+  pp: "",
+  owner: "zxy",
+  create_time: "2017-12-28T00:00:00+08:00",
+  modify_time: "2018-01-17T14:39:06+08:00",
+  del: 0,
+  pub: 1
+}, {
+  key: 6,
+  id: 6,
+  name: "test.flv",
+  pp: "test.jpg",
+  owner: "zxy",
+  create_time: "2017-12-24T00:00:00+08:00",
+  modify_time: "2018-01-17T14:39:06+08:00",
+  del: 1,
+  pub: 1
+}];
 
 class VideoWrapper extends React.Component {
-
   state = {
-    dataSource: [],
-    loading: true
+    dataSource: dataSource,
+    loading: false,
+    btnLoading: false,
   }
 
-  getAllVideos = () => {
-    $.ajax({
-      url: `/record/videos?indexType=uploadRecord&userID=${copyRightUserID}`,
-      contentType: 'application/json',
-      success: (res) => {
-        if (res) {
-          let result = [];
-          res.uploadRecord.map((item, index) => {
-            result.push({
-              ...item,
-              key: index
-            })
-          });
-          console.log("result", result)
-          return result;
-        }
-      }
-    })
-  }
-
+  //获取已购买的视频列表
   getVideos = () => {
+    //HIA
     $.ajax({
       url: `/record/transactions?userID=${userID}`,
       contentType: 'application/json',
       success: (res) => {
-        if (res) {
-          let result = [];
-          let allData = [];
-
-          $.ajax({
-            url: `/record/videos?indexType=uploadRecord&userID=${copyRightUserID}`,
-            contentType: 'application/json',
-            success: (data) => {
-              if (data) {
-                console.log("allData", data)
-                res.transactions.map((trans, index) => {
-                  data.uploadRecord.map(video => {
-                    if (trans.videoID == video.videoID) {
-                      trans.url = video.url;
-                    }
-                  });
-                  result.push({
-                    ...trans,
-                    key: index
-                  });
-                });
-                console.log("result", result)
-                this.setState({
-                  dataSource: result,
-                  loading: false
-                });
-              }
-            }
-          });
+        let result = [];
+        res.transactions.map((item, index) => {
+          result.push({
+            ...item,
+            key: index
+          })
+        });
+        this.setState({
+          dataSource: res.transactions,
+          loading: false,
+          btnLoading: false,
+        });
+      },
+      error: (err) => {
+        message.error(`获取数据失败！HIA ${err.status}: ${err.statusText}`);
+      },
+    });
+    //CMS 根据videoID查询视频信息
+    $.ajax({
+      url: `/action.do`,
+      type: 'post',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        type: "find",
+        msg: {
+          mtype: "fid", //视频id
+          msg: {
+            owner: userID,
+            id: "fid"
+          }
         }
-      }
-    })
+      }),
+      success: () => {
+        //other
+      },
+      error: (err) => {
+        message.error(`获取数据失败！CMS ${err.status}: ${err.statusText}`);
+      },
+    });
   }
 
   componentDidMount() {
     this.getVideos();
   }
 
+  //播放视频
   onWatchVideo = (videoID, url) => {
     $.ajax({
       url: `/videos/${videoID}?userID=${userID}&url=${url}`,
@@ -97,21 +107,38 @@ class VideoWrapper extends React.Component {
     });
   }
 
+  //刷新
+  onReload = () => {
+    this.setState({
+      loading: true,
+      btnLoading: true,
+    });
+    this.getVideos();
+  }
+
   render() {
     const columns = [{
-      title: 'transaction',
-      dataIndex: 'transaction',
-      key: 'transaction',
+      title: '视频名称',
+      dataIndex: 'name',
+      key: 'name',
     }, {
-      title: 'videoID',
-      dataIndex: 'videoID',
-      key: 'videoID',
+      title: '视频ID',
+      dataIndex: 'id',
+      key: 'id',
     }, {
-      title: 'url',
-      dataIndex: 'url',
-      key: 'url',
+      title: '发布者',
+      dataIndex: 'owner',
+      key: 'owner',
     }, {
-      title: 'buyTime',
+      title: '上传时间',
+      dataIndex: 'create_time',
+      key: 'create_time',
+    }, {
+      title: '发布时间',
+      dataIndex: 'modify_time',
+      key: 'modify_time',
+    }, {
+      title: '购买时间',
       dataIndex: 'buyTime',
       key: 'buyTime',
     }, {
@@ -120,10 +147,7 @@ class VideoWrapper extends React.Component {
       key: 'option',
       render: (text, record) => (
         <span>
-          {
-            record.videoID ? <a onClick={()=>{this.onWatchVideo(record.videoID,record.url)}}>播放</a>
-            :<a disabled>已下架</a>
-          }
+         <a onClick={()=>{this.onWatchVideo(record.videoID,record.url)}}>播放</a>
         </span>
       ),
     }];
@@ -143,6 +167,7 @@ class VideoWrapper extends React.Component {
         <Row type={'flex'} justify="center">
           <Col span={23} style={{fontSize:14+'px',marginTop:24+'px'}}>
             <Icon type="video-camera" style={{marginRight:8+'px'}} />已购买视频
+            <Button icon="reload" style={{float:"right"}} loading={this.state.btnLoading} onClick={this.onReload}>刷新</Button>
           </Col>
           <Col span={23} style={{paddingTop:12+'px',borderBottom:1+'px'+' solid'+' #e9e9e9'}}></Col>
           <Col span={23} style={{fontSize:14+'px',marginTop:20+'px'}}>

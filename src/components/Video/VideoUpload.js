@@ -1,9 +1,8 @@
 import React from "react";
-import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message, Divider, Upload } from "antd";
+import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message, Divider, Upload, InputNumber } from "antd";
 import $ from "jquery";
 import styles from "./VideoUpload.less";
 import { userID, password } from "../../utils/utils";
-import mock from "../../../mock/uploadedVideoList.json";
 const FormItem = Form.Item;
 const dataSource = [{
   key: 7,
@@ -13,8 +12,8 @@ const dataSource = [{
   owner: "zxy",
   create_time: "2017-12-28T00:00:00+08:00",
   modify_time: "2018-01-17T14:39:06+08:00",
-  modify_time: 0,
-  modify_time: 1
+  del: 0,
+  pub: 1
 }, {
   key: 6,
   id: 6,
@@ -23,17 +22,17 @@ const dataSource = [{
   owner: "zxy",
   create_time: "2017-12-24T00:00:00+08:00",
   modify_time: "2018-01-17T14:39:06+08:00",
-  modify_time: 1,
-  modify_time: 1
+  del: 1,
+  pub: 1
 }];
-
-
 
 class VideoWrapper extends React.Component {
   state = {
     dataSource: dataSource,
-    visible: false,
     loading: false,
+    uploading: false,
+    fileList: [],
+    visible: false,
   }
 
   //获取已上传的视频列表
@@ -61,90 +60,118 @@ class VideoWrapper extends React.Component {
           });
           this.setState({
             dataSource: result,
-            loading: false
           });
         }
-      }
-    })
+      },
+      error: (err) => {
+        message.error(`获取数据失败！${err.status}: ${err.statusText}`);
+      },
+    });
+    this.setState({
+      loading: false
+    });
   }
 
   componentDidMount() {
     this.getVideos();
   }
 
-  showModal = () => {
+  //上传视频
+  handleUpload = () => {
+    const { fileList } = this.state;
+    const formData = new FormData();
+    fileList.forEach((file) => {
+      formData.append('files[]', file);
+    });
+    console.log("formData", formData, "fileList", fileList);
+    this.setState({
+      uploading: true,
+    });
+    // You can use any AJAX library you like
+    $.ajax({
+      url: `/oss/${userID}/${fileList}`,
+      type: 'put',
+      contentType: 'video/mpeg4',
+      // data: formData,
+      success: (res) => {
+        this.setState({
+          fileList: [],
+          uploading: false,
+        });
+        this.getVideos();
+        message.success('上传成功！');
+      },
+      error: (err) => {
+        this.setState({
+          uploading: false,
+        });
+        message.error(`上传失败！${err.status}: ${err.statusText}`);
+      },
+    });
+  }
+
+  showReleaseModal = (e, videoID, videoName) => {
     this.setState({
       visible: true,
+      videoID: videoID,
+      videoName: videoName
     });
   }
 
-  //上传视频
-  handleOk = (e) => {
-    e.preventDefault();
-    this.props.form.validateFieldsAndScroll([null], (err, values) => {
-      console.log("this.state.file", this.state.file);
-      // const { name } = this.state.file;
-      if (!err) {
-        $.ajax({
-          // url: 'http://test-zxy-yunshang.oss-cn-beijing.aliyuncs.com/oss/zxy/test.mp4',
-          url: `/oss/zxy/test.mp4`,
-          type: 'put',
-          contentType: 'video/mpeg4',
-          statusCode: {
-            200: (xhr) => {
-              console.log("上传成功！")
-              message.success('上传成功！');
-              this.getVideos();
-            },
-            500: (xhr) => {
-              console.log("上传失败！500")
-              message.error(`statusCode:500,上传失败！`);
-            },
-            400: (xhr) => {
-              console.log("上传失败！400")
-              message.error(`statusCode:400,上传失败！`);
-            }
-          },
-          success: (res) => {
-            if (res == {}) { message.success("上传成功！") };
-          },
-        });
-        this.setState({
-          visible: false,
-        });
-      }
-    });
-  }
-
-  handleCancel = (e) => {
+  hideReleaseModal = (e) => {
     this.setState({
-      visible: false,
+      visible: false
     });
   }
 
   //发布视频
-  onReleaseVideo = (videoID, videoName) => {
-    $.ajax({
-      url: `/videos/${videoID}`,
-      type: 'post',
-      data: JSON.stringify({
-        "videoName": videoName,
-        "userID": userID,
-        "password": password
-      }),
-      statusCode: {
-        200: (xhr) => {
-          console.log("上传成功！")
-          message.success('上传成功！');
-        },
-        500: (xhr) => {
-          message.error(`statusCode:500,上传失败！`);
-        },
-        400: (xhr) => {
-          message.error(`statusCode:400,上传失败！`);
-        }
-      },
-    })
+  onReleaseVideo = (e) => {
+    e.preventDefault();
+    this.props.form.validateFields((err, values) => {
+      console.log('Received values of form: ', values);
+      if (!err) {
+        console.log('Received values of form: ', values);
+        const { videoID, videoName } = this.state;
+        //与HIA交互
+        $.ajax({
+          url: `/videos/${videoID}`,
+          type: 'post',
+          data: JSON.stringify({
+            "userID": userID,
+            "password": values.password || password,
+            "videoName": videoName,
+          }),
+          success: () => {
+            //与CMS交互
+            $.ajax({
+              url: '/action.do',
+              type: 'post',
+              data: JSON.stringify({
+                type: 'publish',
+                msg: {
+                  msg: {
+                    owner: userID,
+                    name: videoName
+                  }
+                }
+              }),
+              success: () => {
+                message.success('发布成功！');
+              },
+              error: (err) => {
+                message.error(`发布失败！CMS 返回${err.status}: ${err.statusText}`, 3);
+              },
+            });
+          },
+          error: (err) => {
+            message.error(`发布失败！HIA 返回${err.status}: ${err.statusText}`, 3);
+          },
+        });
+        this.setState({
+          visible: false
+        });
+      }
+    });
   }
 
   //播放视频
@@ -156,42 +183,39 @@ class VideoWrapper extends React.Component {
         200: (xhr) => {
           message.success('播放视频');
         },
-        500: (xhr) => {
-          message.error(`statusCode:500,播放失败！`);
-        },
         400: (xhr) => {
-          console.log("上传失败！400")
           message.error(`statusCode:400,播放失败！`);
-        }
+        },
+        500: (xhr) => {
+          message.error(`statusCode:500,播放失败！服务器错误！`);
+        },
       },
     });
   }
 
   //删除视频
-  onRemoveVideo = (fileName) => {
+  onRemoveVideo = (file) => {
     $.ajax({
-      // url: `/videos/${videoID}`,
-      url: `/oss/${userID}/${fileName}`,
+      url: `/oss/${userID}/${file}`,
       contentType: "application/json",
       type: 'delete',
-      // data: JSON.stringify({
-      //   userID: userID,
-      // }),
-      statusCode: {
-        200: (xhr) => {
-          message.success('删除成功！');
-          this.getVideos();
-        },
-        500: (xhr) => {
-          message.error(`statusCode:500,删除失败！`);
-        },
-        400: (xhr) => {
-          message.error(`statusCode:400,删除失败！`);
-        }
+      success: () => {
+        this.getVideos();
+        message.success("删除成功！");
+      },
+      error: (err) => {
+        message.error(`删除失败！${err.status}: ${err.statusText}`);
       },
     });
   }
 
+  //刷新
+  onReload = () => {
+    this.setState({
+      loading: true
+    });
+    this.getVideos();
+  }
   render() {
     const columns = [{
       title: '视频名称',
@@ -211,15 +235,14 @@ class VideoWrapper extends React.Component {
       key: 'option',
       render: (text, record) => (
         <span>
-          <a onClick={()=>{this.onReleaseVideo(record.videoID,record.videoName)}}>发布</a>
+          <a onClick={()=>{this.onPlayVideo(record.id)}}>播放</a>
           <Divider type="vertical" />
-          <a onClick={()=>{this.onPlayVideo(record.videoID)}}>播放</a>
+          <a onClick={(e)=>{this.showReleaseModal(e,record.id,record.name)}}>发布</a>
           <Divider type="vertical" />
           <a onClick={()=>{this.onRemoveVideo(record.name)}}>删除</a>
         </span>
       ),
     }];
-    const { getFieldDecorator } = this.props.form;
     const formItemLayout = {
       labelCol: {
         xs: { span: 24 },
@@ -230,97 +253,84 @@ class VideoWrapper extends React.Component {
         sm: { span: 16 },
       },
     };
-
     const props = {
-      onChange: (info) => {
-        if (info.file.status !== 'uploading') {
-          console.log(info.file, info.fileList);
-        }
-        if (info.file.status === 'done') {
-          message.success(`${info.file.name} file uploaded successfully`);
-        } else if (info.file.status === 'error') {
-          message.error(`${info.file.name} file upload failed.`);
-        }
+      action: '//jsonplaceholder.typicode.com/posts/',
+      onRemove: (file) => {
+        this.setState(({ fileList }) => {
+          const index = fileList.indexOf(file);
+          const newFileList = fileList.slice();
+          newFileList.splice(index, 1);
+          return {
+            fileList: newFileList,
+          };
+        });
       },
       beforeUpload: (file) => {
-        console.log("file", file);
-        this.setState({ file: file });
+        console.log("beforeUpload", file);
+        this.setState(({ fileList }) => ({
+          fileList: [...fileList, file],
+        }));
         return false;
-      }
+      },
+      fileList: this.state.fileList,
     };
+    const { getFieldDecorator } = this.props.form;
+    const { loading, uploading, dataSource, visible } = this.state;
     return (
       <div>
         <Row type={'flex'} justify="center">
           <Col span={23} style={{fontSize:14+'px',marginTop:24+'px'}}>
             <Icon type="video-camera" style={{marginRight:8+'px'}} />已上传视频列表
-            <Upload {...props}>
-              <Button>
-                <Icon type="upload" /> 视频上传
-              </Button>
-            </Upload>
-            <Button onClick={this.handleOk}>确定上传</Button>
-            <Button type="primary" icon="plus" style={{float:"right"}} onClick={this.showModal}>视频上传</Button>
+            <Button icon="reload" style={{marginLeft:10+'px'}} onClick={this.onReload}>刷新</Button>
+            <Button
+              style={{float:"right"}}
+              type="primary"
+              onClick={this.handleUpload}
+              disabled={this.state.fileList.length === 0}
+              loading={uploading}
+            >
+              {uploading ? '上传中' : '开始上传' }
+            </Button>
+            <span style={{float:"right",marginRight:"8px"}}>
+              <Upload {...props} style={{float:"right"}}>
+                <Button>
+                  <Icon type="upload" /> 视频上传
+                </Button>
+              </Upload>
+            </span>
           </Col>
           <Col span={23} style={{paddingTop:12+'px',borderBottom:1+'px'+' solid'+' #e9e9e9'}}></Col>
           <Col span={23} style={{fontSize:14+'px',marginTop:24+'px'}}>
-            <Table dataSource={this.state.dataSource} columns={columns} loading={this.state.loading} />
+            <Table dataSource={this.state.dataSource} columns={columns} loading={loading} />
           </Col>
         </Row>
         <Modal
+          title="视频发布"
           destroyOnClose
-          title="视频上传"
-          visible={this.state.visible}
-          onOk={this.handleOk}
-          onCancel={this.handleCancel}
+          visible={visible}
+          onCancel={this.hideReleaseModal}
+          onOk={this.onReleaseVideo}
         >
-          <Form onSubmit={this.handleSubmit}>
+          <Form>
             <FormItem
               {...formItemLayout}
-              label="userID"
+              label="定价"
             >
-              {getFieldDecorator('userID', {
-                initialValue:userID,
-                rules: [{
-                  required: true, message: 'Please input your userID!',
-                }],
-                })(
-                  <Input />
+              {getFieldDecorator('price', {
+                initialValue:0,
+                rules: [{ required: true, message: '请填写产品定价！' }],
+              })(
+                <InputNumber formatter={value => `￥ ${value}`} style={{width:150+'px'}} />
               )}
             </FormItem>
             <FormItem
               {...formItemLayout}
-              label="videoID"
+              label="密码确认"
             >
-               {getFieldDecorator('videoID', {
-                rules: [{
-                  required: true, message: 'Please input your videoID!',
-                }],
-                })(
-                  <Input />
-              )}
-            </FormItem>
-            <FormItem
-              {...formItemLayout}
-              label="videoName"
-            >
-              {getFieldDecorator('videoName', {
-                rules: [{
-                  required: true, message: 'Please input your videoName!',
-                }],
-                })(
-                  <Input />
-              )}
-            </FormItem>
-            <FormItem
-              {...formItemLayout}
-              label="url"
-            >
-              {getFieldDecorator('url', {
-                rules: [{
-                  required: true, message: 'Please input your url!',
-                }],
-                })(
-                  <Input />
+              {getFieldDecorator('password', {
+                rules: [{ required: true, message: '请输入你的密码进行验证！' }],
+              })(
+                <Input type="password" style={{width:200+'px'}} />
               )}
             </FormItem>
           </Form>

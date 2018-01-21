@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Form, Button, Icon, Input, Checkbox, message } from "antd";
+import { Form, Button, Icon, Input, Checkbox, message, notification } from "antd";
 import $ from "jquery";
 import md5 from "md5";
 import styles from "./LoginLayout.less";
@@ -38,34 +38,24 @@ class LoginForm extends React.Component {
             userID: values.userID,
             password: values.password
           }),
-          statusCode: {
-            201: (xhr) => {
-              message.success('登录成功！欢迎访问~');
-            },
-            400: (xhr) => {
-              message.error(`statusCode:400,当前请求无法被服务器理解！`);
-              this.props.subscribeAuth(true);
-              this.props.history.push("/");
-              //将用户id和pwd存储到localStorage
-              localStorage.setItem("userID", values.userID);
-              localStorage.setItem("password", values.password);
-            },
-            404: (xhr) => {
-              message.error(`statusCode:404！不存在的请求！`);
-            },
-            500: (xhr) => {
-              message.error(`statusCode:500,服务器错误！`);
-            },
-            504: (xhr) => {
-              message.error(`statusCode:504,网关超时！`);
-              this.props.subscribeAuth(true);
-              this.props.history.push("/");
-              //将用户id和pwd存储到localStorage
-              localStorage.setItem("userID", values.userID);
-              localStorage.setItem("password", values.password);
-            },
+          success: () => {
+            message.success("登陆成功！欢迎访问");
+            notification.success({
+              message: "登陆成功！",
+              description: "欢迎访问区块链Demo~",
+              duration: 4.5,
+              icon: <Icon type="smile-circle" style={{ color: '#108ee9' }} />,
+            });
           },
-        })
+          error: (err) => {
+            message.error(`登陆失败！${err.status}: ${err.statusText}`);
+            this.props.subscribeAuth(true);
+            this.props.history.push("/");
+            //将用户id和pwd存储到localStorage
+            localStorage.setItem("userID", values.userID);
+            localStorage.setItem("password", values.password);
+          },
+        });
       }
     });
   }
