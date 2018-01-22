@@ -3,26 +3,18 @@ import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from "re
 import LoginLayout from "./layouts/LoginLayout";
 import BasicLayout from "./layouts/BasicLayout";
 import "./styles/main.css";
+import "../node_modules/clipboard/dist/clipboard.min.js";
 
 export default class App extends React.Component {
   state = {
-    isAuthenticated: false,
+    // isAuthenticated: localStorage.getItem("userID") ? true : false,
+    isAuthenticated: true,
   }
 
   subscribeAuth = (auth) => {
     this.setState({
       isAuthenticated: auth
-    })
-  }
-
-  // shouldComponentUpdate(nextProps, nextState) {
-  //   console.log("shouldComponentUpdate---", nextProps, nextState);
-  //   return nextState.isAuthenticated ? true : false;
-  // }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    console.log("this.state.isAuthenticated", this.state.isAuthenticated, "nextState", nextState)
-    return this.state.isAuthenticated === nextState.isAuthenticated ? false : true
+    });
   }
 
   render() {

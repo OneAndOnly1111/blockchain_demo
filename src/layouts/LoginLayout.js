@@ -35,11 +35,16 @@ class LoginForm extends React.Component {
           url: '/users/login',
           type: 'post',
           data: JSON.stringify({
-            userID: values.userID,
+            userID: +values.userID,
             password: values.password
           }),
           success: () => {
-            message.success("登陆成功！欢迎访问");
+            // message.success("登陆成功！欢迎访问");
+            this.props.subscribeAuth(true);
+            this.props.history.push("/");
+            //将用户id和pwd存储到localStorage
+            localStorage.setItem("userID", values.userID);
+            localStorage.setItem("password", values.password);
             notification.success({
               message: "登陆成功！",
               description: "欢迎访问区块链Demo~",
@@ -49,9 +54,6 @@ class LoginForm extends React.Component {
           },
           error: (err) => {
             message.error(`登陆失败！${err.status}: ${err.statusText}`);
-            this.props.subscribeAuth(true);
-            this.props.history.push("/");
-            //将用户id和pwd存储到localStorage
             localStorage.setItem("userID", values.userID);
             localStorage.setItem("password", values.password);
           },

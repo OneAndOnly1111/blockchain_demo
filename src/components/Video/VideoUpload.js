@@ -3,6 +3,7 @@ import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message, Divi
 import $ from "jquery";
 import styles from "./VideoUpload.less";
 import { userID, password } from "../../utils/utils";
+import VideoPlay from "./VideoPlay";
 const FormItem = Form.Item;
 const dataSource = [{
   key: 7,
@@ -28,11 +29,12 @@ const dataSource = [{
 
 class VideoWrapper extends React.Component {
   state = {
-    dataSource: dataSource,
-    loading: false,
+    dataSource: [],
+    loading: true,
     uploading: false,
     fileList: [],
     visible: false,
+    playVisible: false,
   }
 
   //获取已上传的视频列表
@@ -40,19 +42,20 @@ class VideoWrapper extends React.Component {
     $.ajax({
       url: '/action.do',
       type: 'post',
+      contentType: 'application/json',
       data: JSON.stringify({
-        type: 'find',
+        "type": "find",
         msg: {
-          mtype: userID,
+          mtype: "owner",
           msg: {
-            owner: userID
+            owner: String(userID)
           }
         }
       }),
       success: (res) => {
         if (res) {
           let result = [];
-          res.uploadRecord.map((item, index) => {
+          res.data.map((item, index) => {
             result.push({
               ...item,
               key: index
@@ -78,34 +81,58 @@ class VideoWrapper extends React.Component {
 
   //上传视频
   handleUpload = () => {
-    const { fileList } = this.state;
+    const { fileList, file } = this.state;
     const formData = new FormData();
     fileList.forEach((file) => {
+      console.log("file-0", file);
       formData.append('files[]', file);
     });
-    console.log("formData", formData, "fileList", fileList);
     this.setState({
       uploading: true,
     });
+    console.log("formData", FormData);
     // You can use any AJAX library you like
     $.ajax({
       url: `/oss/${userID}/${fileList}`,
       type: 'put',
       contentType: 'video/mpeg4',
-      // data: formData,
       success: (res) => {
-        this.setState({
-          fileList: [],
-          uploading: false,
-        });
-        this.getVideos();
-        message.success('上传成功！');
+        $.ajax({
+          url: '/action.do',
+          type: 'post',
+          contentType: 'application/json',
+          dataType: 'text',
+          data: JSON.stringify({
+            type: "add",
+            msg: {
+              msg: {
+                name: fileList[0].name, //文件名称
+                owner: String(userID),
+                pp: "", //预览图片
+              }
+            }
+          }),
+          success: (res) => {
+            this.setState({
+              fileList: [],
+              uploading: false,
+            });
+            this.getVideos();
+            message.success('上传成功！');
+          },
+          error: (err) => {
+            this.setState({
+              uploading: false,
+            });
+            message.error(`上传失败！CMS${err.status}: ${err.statusText}`);
+          },
+        })
       },
       error: (err) => {
         this.setState({
           uploading: false,
         });
-        message.error(`上传失败！${err.status}: ${err.statusText}`);
+        message.error(`CMS上传失败！CMS${err.status}: ${err.statusText}`);
       },
     });
   }
@@ -136,26 +163,31 @@ class VideoWrapper extends React.Component {
         $.ajax({
           url: `/videos/${videoID}`,
           type: 'post',
+          contentType: 'application/json',
           data: JSON.stringify({
-            "userID": userID,
+            "userID": +userID,
             "password": values.password || password,
             "videoName": videoName,
+            "price": +values.price
           }),
           success: () => {
             //与CMS交互
             $.ajax({
               url: '/action.do',
               type: 'post',
+              contentType: "application/json",
+              dataType: 'text',
               data: JSON.stringify({
                 type: 'publish',
                 msg: {
                   msg: {
-                    owner: userID,
-                    name: videoName
+                    owner: String(userID),
+                    name: String(videoName)
                   }
                 }
               }),
               success: () => {
+                this.getVideos();
                 message.success('发布成功！');
               },
               error: (err) => {
@@ -175,30 +207,65 @@ class VideoWrapper extends React.Component {
   }
 
   //播放视频
-  onPlayVideo = (videoID) => {
+  playVisibleChange = (visible) => {
+    this.setState({
+      playVisible: visible
+    });
+  }
+  onPlayVideo = (record) => {
     $.ajax({
-      url: `/videos/${videoID}?${userID}`,
-      contentType: "application/json",
-      statusCode: {
-        200: (xhr) => {
-          message.success('播放视频');
-        },
-        400: (xhr) => {
-          message.error(`statusCode:400,播放失败！`);
-        },
-        500: (xhr) => {
-          message.error(`statusCode:500,播放失败！服务器错误！`);
-        },
+      url: `/video/${record.id}?userID=${userID}&password=${password}`,
+      contentType: 'application/json',
+      success: () => {
+        $.ajax({
+          url: `/oss/${userID}/${record.name}`,
+          contentType: 'application/json',
+          success: (res) => {
+
+          },
+          error: (err) => {
+            message.error(`播放失败！CMS ${err.status}: ${err.statusText}`);
+          },
+        })
       },
+      error: (err) => {
+        message.error(`HIA鉴权失败！HIA ${err.status}: ${err.statusText}`);
+      },
+    });
+    this.setState({
+      playVisible: true
     });
   }
 
   //删除视频
-  onRemoveVideo = (file) => {
+  onRemoveVideo = (name) => {
+    // $.ajax({
+    //   url: `/oss/${userID}/${name}`,
+    //   contentType: "application/json",
+    //   type: 'delete',
+    //   success: () => {
+    //     this.getVideos();
+    //     message.success("删除成功！");
+    //   },
+    //   error: (err) => {
+    //     message.error(`删除失败！${err.status}: ${err.statusText}`);
+    //   },
+    // });
     $.ajax({
-      url: `/oss/${userID}/${file}`,
+      url: `/action.do`,
       contentType: "application/json",
-      type: 'delete',
+      type: 'post',
+      dataType: 'text',
+      data: JSON.stringify({
+        type: 'del',
+        msg: {
+          mtype: "name",
+          msg: {
+            name: name,
+            owner: String(userID)
+          }
+        }
+      }),
       success: () => {
         this.getVideos();
         message.success("删除成功！");
@@ -214,7 +281,7 @@ class VideoWrapper extends React.Component {
     this.setState({
       loading: true
     });
-    this.getVideos();
+    window.setTimeout(this.getVideos, 1000);
   }
   render() {
     const columns = [{
@@ -235,11 +302,11 @@ class VideoWrapper extends React.Component {
       key: 'option',
       render: (text, record) => (
         <span>
-          <a onClick={()=>{this.onPlayVideo(record.id)}}>播放</a>
+          <a onClick={()=>{this.onPlayVideo(record)}}>播放</a>
           <Divider type="vertical" />
-          <a onClick={(e)=>{this.showReleaseModal(e,record.id,record.name)}}>发布</a>
+          <a onClick={(e)=>{this.showReleaseModal(e,record.id,record.name)}} disabled={(record.pub==1&&record.del==1)}>{record.pub==0?"发布":"已发布"}</a>
           <Divider type="vertical" />
-          <a onClick={()=>{this.onRemoveVideo(record.name)}}>删除</a>
+          <a onClick={()=>{this.onRemoveVideo(record.name)}} disabled={record.del==1}>{record.del==0?"删除":"已删除"}</a>
         </span>
       ),
     }];
@@ -269,6 +336,7 @@ class VideoWrapper extends React.Component {
         console.log("beforeUpload", file);
         this.setState(({ fileList }) => ({
           fileList: [...fileList, file],
+          file: file,
         }));
         return false;
       },
@@ -278,6 +346,7 @@ class VideoWrapper extends React.Component {
     const { loading, uploading, dataSource, visible } = this.state;
     return (
       <div>
+        <VideoPlay visible={this.state.playVisible} playVisibleChange={this.playVisibleChange}/>
         <Row type={'flex'} justify="center">
           <Col span={23} style={{fontSize:14+'px',marginTop:24+'px'}}>
             <Icon type="video-camera" style={{marginRight:8+'px'}} />已上传视频列表

@@ -16,28 +16,34 @@ module.exports = {
 		port: 8081,
 		proxy: {
 			'/users': {
-				target: 'http://47.96.188.88:8080/',
+				// target: 'http://47.96.188.88:8080/', //http://hia.bchain.entropycode.com/
+				target: 'http://hia.bchain.entropycode.com/',
 			},
 			'/videos': {
 				target: 'http://47.96.188.88:8080/',
+				// target: 'http://hia.bchain.entropycode.com/',
 			},
 			'/transaction': {
-				target: 'http://47.96.188.88:8080/',
+				// target: 'http://47.96.188.88:8080/',
+				target: 'http://hia.bchain.entropycode.com/',
 			},
 			'/record/transaction': {
-				target: 'http://47.96.188.88:8080/',
+				// target: 'http://47.96.188.88:8080/',
+				target: 'http://hia.bchain.entropycode.com/',
 			},
 			'/record/videos': {
-				target: 'http://47.96.188.88:8080/',
+				// target: 'http://47.96.188.88:8080/',
+				target: 'http://hia.bchain.entropycode.com/',
+			},
+			'/action.do': {
+				// target: 'http://47.96.188.88:8989/',
+				target: 'http://cms.bchain.entropycode.com/',
 			},
 			'/oss': {
 				target: 'http://test-zxy-yunshang.oss-cn-beijing.aliyuncs.com/',
 				secure: false,
 				pathRewrite: { "^/oss": "" },
 				changeOrigin: true
-			},
-			'/action.do': {
-				target: 'http://notsure.cms.com/',
 			},
 		}
 	},

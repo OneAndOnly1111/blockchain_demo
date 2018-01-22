@@ -1,12 +1,13 @@
 import React from "react";
 import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message, Divider } from "antd";
 import $ from "jquery";
+import Clipboard from "clipboard";
 import styles from "./VideoRelease.less";
 import { userID, password } from "../../utils/utils";
 const FormItem = Form.Item;
 const dataSource = [{
-  key: 7,
-  id: 7,
+  key: 2,
+  id: 2,
   name: "kkk2.flv",
   pp: "",
   owner: "zxy",
@@ -15,8 +16,8 @@ const dataSource = [{
   del: 0,
   pub: 1
 }, {
-  key: 6,
-  id: 6,
+  key: 4,
+  id: 4,
   name: "test.flv",
   pp: "test.jpg",
   owner: "zxy",
@@ -28,9 +29,9 @@ const dataSource = [{
 
 class VideoWrapper extends React.Component {
   state = {
-    dataSource: dataSource,
+    dataSource: [],
     visible: false,
-    loading: false,
+    loading: true,
   }
 
   //获取已发布的视频
@@ -39,44 +40,51 @@ class VideoWrapper extends React.Component {
     $.ajax({
       url: `/record/videos?indexType=uploadRecord&userID=${userID}`,
       contentType: 'application/json',
-      success: (res) => {
+      success: (hia) => {
         let result = [];
-        res.uploadRecord.map((item, index) => {
-          result.push({
-            ...item,
-            key: index
-          })
-        });
-        this.setState({
-          dataSource: result,
+        $.ajax({
+          url: `/action.do`,
+          type: 'post',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            type: "find",
+            msg: {
+              mtype: "owner",
+              msg: {
+                owner: String(userID),
+              }
+            }
+          }),
+          success: (cms) => {
+            hia.uploadRecord.map((item, index) => {
+              cms.data.map(ele => {
+                if (item.videoID == ele.id && ele.pub == 1) {
+                  result.push({
+                    key: index,
+                    name: ele.name,
+                    id: ele.id,
+                    create_time: ele.create_time,
+                    modify_time: ele.modify_time,
+                    price: item.price,
+                    buys: item.buys,
+                  });
+                }
+              });
+            });
+            console.log("result", result);
+            this.setState({
+              dataSource: result
+            });
+          },
+          error: (err) => {
+            message.error(`获取数据失败！CMS ${err.status}: ${err.statusText}`);
+          },
         });
       },
       error: (err) => {
         message.error(`获取数据失败！HIA ${err.status}: ${err.statusText}`);
       },
     });
-    //CMS
-    $.ajax({
-      url: `/action.do`,
-      type: 'post',
-      contentType: 'application/json',
-      data: JSON.stringify({
-        type: "find",
-        msg: {
-          mtype: userID,
-          msg: {
-            owner: userID,
-          }
-        }
-      }),
-      success: () => {
-        //other
-      },
-      error: (err) => {
-        message.error(`获取数据失败！CMS ${err.status}: ${err.statusText}`);
-      },
-    });
-
     this.setState({
       loading: false
     });
@@ -84,6 +92,7 @@ class VideoWrapper extends React.Component {
 
   componentDidMount() {
     this.getVideos();
+    new Clipboard('.btn');
   }
 
   //播放视频
@@ -106,50 +115,11 @@ class VideoWrapper extends React.Component {
     });
   }
 
+  //视频分享modal显示
   showModal = (record) => {
-    console.log("shareUrl", userID, record.id);
     this.setState({
       visible: true,
-    });
-    this.props.form.setFieldsValue({ shareUrl: userID + "#" + record.id })
-  }
-
-  handleOk = (e) => {
-    e.preventDefault();
-    this.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        $.ajax({
-          url: `/videos/${values.videoID}`,
-          type: 'post',
-          data: JSON.stringify({
-            userID: values.userID,
-            videoName: values.videoName,
-            url: values.url
-          }),
-          statusCode: {
-            200: (xhr) => {
-              console.log("上传成功！")
-              message.success('上传成功！');
-              this.getVideos();
-            },
-            500: (xhr) => {
-              console.log("上传失败！500")
-              message.error(`statusCode:500,上传失败！`);
-            },
-            400: (xhr) => {
-              console.log("上传失败！400")
-              message.error(`statusCode:400,上传失败！`);
-            }
-          },
-          success: (res) => {
-            if (res == {}) { message.success("上传成功！") };
-          },
-        });
-        this.getVideos();
-        this.setState({
-          visible: false,
-        });
-      }
+      shareUrl: `${userID}#${record.id}`,
     });
   }
 
@@ -165,11 +135,12 @@ class VideoWrapper extends React.Component {
       url: "/action.do",
       contentType: "application/json",
       type: 'post',
+      dataType: 'text',
       data: JSON.stringify({
         type: "cancel",
         msg: {
           msg: {
-            owner: userID,
+            owner: String(userID),
             name: record.name,
           }
         }
@@ -184,29 +155,12 @@ class VideoWrapper extends React.Component {
     });
   }
 
-  //分享url
-  onShareUrl = (record) => {
-    Modal.confirm({
-      title: '你确定要要分享该视频吗？',
-      content: `分享链接：${userID}#${record.id}`,
-      okText: '点击复制链接',
-      cancelText: '取消',
-      onOk: () => {
-        var e = document.getElementsByClassName("ant-confirm-content");
-        // e.select();
-        document.execCommand("copy");
-        message.success("复制成功！");
-        // window.clipboardData.setData("Text", `${userID}#${record.id}`);
-      }
-    })
-  }
-
   //刷新
   onReload = () => {
     this.setState({
       loading: true
     });
-    this.getVideos();
+    window.setTimeout(this.getVideos, 1000);
   }
 
   render() {
@@ -230,6 +184,7 @@ class VideoWrapper extends React.Component {
       title: '定价',
       dataIndex: 'price',
       key: 'price',
+      render: text => <span>￥ {text}</span>
     }, {
       title: '购买次数',
       dataIndex: 'buys',
@@ -238,6 +193,7 @@ class VideoWrapper extends React.Component {
       title: '收益',
       dataIndex: 'money',
       key: 'money',
+      render: (text, record) => <span>￥ {record.price * record.buys}</span>
     }, {
       title: '操作',
       dataIndex: 'option',
@@ -246,7 +202,7 @@ class VideoWrapper extends React.Component {
         <span>
           <a onClick={()=>{this.onPlayVideo(record)}}>播放</a>
           <Divider type="vertical" />
-          <a onClick={()=>{this.onShareUrl(record)}}>分享</a>
+          <a onClick={()=>{this.showModal(record)}}>分享</a>
           <Divider type="vertical" />
           <a onClick={()=>{this.onCancleRelease(record)}}>取消发布</a>
         </span>
@@ -277,22 +233,24 @@ class VideoWrapper extends React.Component {
         </Row>
         <Modal
           destroyOnClose
+          footer={null}
           title="视频分享"
           visible={this.state.visible}
-          onOk={this.handleOk}
-          onCancel={this.handleCancel}
+          onCancel = {this.handleCancel}
         >
-          <Form onSubmit={this.handleSubmit}>
+          <Form>
             <FormItem
               {...formItemLayout}
-              label="分享url"
+              label="分享链接"
             >
               {getFieldDecorator('shareUrl', {
                 rules: [{
                   required: true, message: 'Please input your url!',
                 }],
                 })(
-                  <Input value={this.state.shareUrl} disabled />
+                <div>
+                  <Input value={this.state.shareUrl} readOnly addonAfter={<Icon type="copy" style={{cursor: "pointer"}} className="btn" data-clipboard-target="#shareUrl" />} />
+                </div>
               )}
             </FormItem>
           </Form>
