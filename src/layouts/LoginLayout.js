@@ -54,8 +54,6 @@ class LoginForm extends React.Component {
           },
           error: (err) => {
             message.error(`登陆失败！${err.status}: ${err.statusText}`);
-            localStorage.setItem("userID", values.userID);
-            localStorage.setItem("password", values.password);
           },
         });
       }

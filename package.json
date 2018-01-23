@@ -40,6 +40,7 @@
     "jquery": "^3.2.1",
     "less": "^2.7.2",
     "less-loader": "^4.0.5",
+    "moment": "^2.20.1",
     "postcss-load-config": "^1.2.0",
     "postcss-loader": "^2.0.9",
     "prop-types": "^15.6.0",

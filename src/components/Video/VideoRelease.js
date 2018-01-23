@@ -56,7 +56,7 @@ class VideoWrapper extends React.Component {
             }
           }),
           success: (cms) => {
-            hia.uploadRecord.map((item, index) => {
+            hia.uploadRecord ? hia.uploadRecord.map((item, index) => {
               cms.data.map(ele => {
                 if (item.videoID == ele.id && ele.pub == 1) {
                   result.push({
@@ -70,7 +70,7 @@ class VideoWrapper extends React.Component {
                   });
                 }
               });
-            });
+            }) : null;
             console.log("result", result);
             this.setState({
               dataSource: result
@@ -119,7 +119,7 @@ class VideoWrapper extends React.Component {
   showModal = (record) => {
     this.setState({
       visible: true,
-      shareUrl: `${userID}#${record.id}`,
+      shareUrl: userID + "#" + record.id,
     });
   }
 
@@ -203,8 +203,8 @@ class VideoWrapper extends React.Component {
           <a onClick={()=>{this.onPlayVideo(record)}}>播放</a>
           <Divider type="vertical" />
           <a onClick={()=>{this.showModal(record)}}>分享</a>
-          <Divider type="vertical" />
-          <a onClick={()=>{this.onCancleRelease(record)}}>取消发布</a>
+          {/*<Divider type="vertical" />
+          <a onClick={()=>{this.onCancleRelease(record)}}>取消发布</a>*/}
         </span>
       ),
     }];
@@ -249,7 +249,9 @@ class VideoWrapper extends React.Component {
                 }],
                 })(
                 <div>
-                  <Input value={this.state.shareUrl} readOnly addonAfter={<Icon type="copy" style={{cursor: "pointer"}} className="btn" data-clipboard-target="#shareUrl" />} />
+      <Input value={this.state.shareUrl} readOnly addonAfter={<Icon type="copy" style={{cursor: "pointer"}} className="btn" data-clipboard-target="#shareUrl" />
+    }
+    />
                 </div>
               )}
             </FormItem>

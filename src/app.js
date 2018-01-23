@@ -7,8 +7,16 @@ import "../node_modules/clipboard/dist/clipboard.min.js";
 
 export default class App extends React.Component {
   state = {
-    // isAuthenticated: localStorage.getItem("userID") ? true : false,
-    isAuthenticated: true,
+    isAuthenticated: localStorage.getItem("userID") ? true : false,
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    // location.reload();
+    if (this.state.isAuthenticated == nextState.isAuthenticated) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   subscribeAuth = (auth) => {

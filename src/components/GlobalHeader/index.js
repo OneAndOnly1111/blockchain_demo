@@ -15,9 +15,9 @@ export default class GlobalHeader extends PureComponent {
 
   handleMenuClick = (item, key, keyPath) => {
     if (item.key == "logout") {
-      this.props.subscribeAuth(false);
       localStorage.removeItem("userID");
       localStorage.removeItem("password");
+      this.props.subscribeAuth(false);
     }
   }
 
