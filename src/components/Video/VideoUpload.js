@@ -227,20 +227,20 @@ class VideoWrapper extends React.Component {
       success: () => {
         var url = `http://localhost:8081/oss/${userID}/${record.name}`;
         console.log("url", url)
-        window.open(url);
-        // this.setState({
-        //   playUrl: `http://localhost:8081/oss/${userID}/${record.name}`
-        // });
-        $.ajax({
-          url: `/oss/${userID}/${record.name}`,
-          contentType: 'application/json',
-          success: (res) => {
+        window.open(url, '_self');
+        this.setState({
+          playUrl: `http://localhost:8081/oss/${userID}/${record.name}`
+        });
+        // $.ajax({
+        //   url: `/oss/${userID}/${record.name}`,
+        //   contentType: 'application/json',
+        //   success: (res) => {
 
-          },
-          error: (err) => {
-            message.error(`播放失败！CMS ${err.status}: ${err.statusText}`);
-          },
-        })
+        //   },
+        //   error: (err) => {
+        //     message.error(`播放失败！CMS ${err.status}: ${err.statusText}`);
+        //   },
+        // })
       },
       error: (err) => {
         message.error(`HIA鉴权失败！HIA ${err.status}: ${err.statusText}`);
@@ -361,6 +361,7 @@ class VideoWrapper extends React.Component {
     return (
       <div>
         <Row type={'flex'} justify="center">
+          {/*<VideoPlay visible={this.state.playVisible} playVisibleChange={this.playVisibleChange} playUrl={this.state.playUrl}/>*/}
           <Col span={23} style={{fontSize:14+'px',marginTop:24+'px'}}>
             <Icon type="video-camera" style={{marginRight:8+'px'}} />已上传视频列表
             <Button icon="reload" style={{float:"right",marginLeft:8+'px'}} onClick={this.onReload}>刷新</Button>
@@ -426,4 +427,3 @@ class VideoWrapper extends React.Component {
 
 const VideoUpload = Form.create()(VideoWrapper);
 export default VideoUpload
-//<VideoPlay visible={this.state.playVisible} playVisibleChange={this.playVisibleChange} playUrl={this.state.playUrl}/>

@@ -249,9 +249,7 @@ class VideoWrapper extends React.Component {
                 }],
                 })(
                 <div>
-      <Input value={this.state.shareUrl} readOnly addonAfter={<Icon type="copy" style={{cursor: "pointer"}} className="btn" data-clipboard-target="#shareUrl" />
-    }
-    />
+                  <Input value={this.state.shareUrl} readOnly addonAfter={<Icon type="copy" style={{cursor: "pointer"}} className="btn" data-clipboard-target="#shareUrl" />} />
                 </div>
               )}
             </FormItem>
