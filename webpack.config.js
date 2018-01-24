@@ -20,11 +20,14 @@ module.exports = {
 				target: 'http://hia.bchain.entropycode.com/',
 			},
 			'/videos': {
-				target: 'http://47.96.188.88:8080/',
-				// target: 'http://hia.bchain.entropycode.com/',
+				// target: 'http://47.96.188.88:8080/',
+				target: 'http://hia.bchain.entropycode.com/',
 			},
 			'/transaction': {
 				// target: 'http://47.96.188.88:8080/',
+				target: 'http://hia.bchain.entropycode.com/',
+			},
+			'/record/user': {
 				target: 'http://hia.bchain.entropycode.com/',
 			},
 			'/record/transaction': {
@@ -42,7 +45,7 @@ module.exports = {
 			'/oss': {
 				target: 'http://test-zxy-yunshang.oss-cn-beijing.aliyuncs.com/',
 				secure: false,
-				pathRewrite: { "^/oss": "" },
+				// pathRewrite: { "^/a": "" },
 				changeOrigin: true
 			},
 		}

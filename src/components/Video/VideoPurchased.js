@@ -2,6 +2,7 @@ import React from "react";
 import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message, Steps, List } from "antd";
 import $ from "jquery";
 import moment from "moment";
+import VideoPlay from "./VideoPlay";
 import styles from "./VideoPurchased.less";
 import { userID, password } from "../../utils/utils";
 const FormItem = Form.Item;
@@ -15,7 +16,9 @@ class VideoWrapper extends React.Component {
     visible: false,
     current: 0,
     shareUrl: '',
-    shareVideoInfo: []
+    shareVideoInfo: [],
+    playVisible: false,
+    playUrl: '',
   }
 
   //获取已购买的视频列表
@@ -25,53 +28,58 @@ class VideoWrapper extends React.Component {
       url: `/record/transactions?userID=${userID}`,
       contentType: 'application/json',
       success: (hia) => {
-        let result = [];
-        hia.transactions.map((item, index) => {
-          $.ajax({
-            url: `/action.do`,
-            type: 'post',
-            contentType: 'application/json',
-            data: JSON.stringify({
-              type: "find",
-              msg: {
-                mtype: "fid", //视频id
+        if (hia.transactions) {
+          let result = [];
+          hia.transactions.map((item, index) => {
+            $.ajax({
+              url: `/action.do`,
+              type: 'post',
+              contentType: 'application/json',
+              data: JSON.stringify({
+                type: "find",
                 msg: {
-                  owner: String(item.videoUserId),
-                  id: +item.videoID
+                  mtype: "fid", //视频id
+                  msg: {
+                    owner: String(item.videoUserId),
+                    id: +item.videoID
+                  }
                 }
-              }
-            }),
-            success: (cms) => {
-              cms = cms.data[0];
-              if (cms.id == item.videoID) {
-                result.push({
-                  key: index,
-                  id: cms.id,
-                  name: cms.name,
-                  owner: cms.owner,
-                  create_time: moment(cms.create_time).format("YYYY-MM-DD HH:mm:ss"),
-                  modify_time: moment(cms.modify_time).format("YYYY-MM-DD HH:mm:ss"),
-                  buy_time: moment(item.buyTime * 1000).format("YYYY-MM-DD HH:mm:ss"),
-                });
-              }
-              console.log("result", result);
-              this.setState({
-                dataSource: result
-              });
-            },
-            error: (err) => {
-              // message.error(`获取数据失败！CMS ${err.status}: ${err.statusText}`);
-            },
+              }),
+              success: (cms) => {
+                if (cms.data.length) {
+                  cms = cms.data[0];
+                  if (cms.id == item.videoID) {
+                    result.push({
+                      key: index,
+                      id: cms.id,
+                      name: cms.name,
+                      owner: cms.owner,
+                      create_time: moment(cms.create_time).format("YYYY-MM-DD HH:mm:ss"),
+                      modify_time: moment(cms.modify_time).format("YYYY-MM-DD HH:mm:ss"),
+                      buy_time: moment(item.buyTime * 1000).format("YYYY-MM-DD HH:mm:ss"),
+                    });
+                  }
+                  this.setState({
+                    dataSource: result,
+                    loading: false,
+                    btnLoading: false,
+                  });
+                }
+              },
+              error: (err) => {
+                // message.error(`获取数据失败！CMS ${err.status}: ${err.statusText}`);
+              },
+            });
           });
-        });
+        }
       },
       error: (err) => {
         message.error(`获取数据失败！HIA ${err.status}: ${err.statusText}`);
+        this.setState({
+          loading: false,
+          btnLoading: false,
+        });
       },
-    });
-    this.setState({
-      loading: false,
-      btnLoading: false,
     });
   }
 
@@ -80,24 +88,26 @@ class VideoWrapper extends React.Component {
   }
 
   //播放视频
-  onWatchVideo = (videoID, url) => {
+  playVisibleChange = (visible) => {
+    this.setState({
+      playVisible: visible
+    });
+  }
+  onPlayVideo = (record) => {
     $.ajax({
-      url: `/videos/${videoID}?userID=${userID}&url=${url}`,
-      contentType: "application/json",
-      statusCode: {
-        200: (xhr) => {
-          console.log("播放成功！")
-          message.success('播放成功！');
-        },
-        500: (xhr) => {
-          console.log("播放失败！500")
-          message.error(`statusCode:500,播放失败！请确定你已购买该视频！`);
-        },
-        400: (xhr) => {
-          console.log("播放失败！400")
-          message.error(`statusCode:400,播放失败！请确定你已购买该视频！`);
-        }
+      url: `/video/${record.id}?userID=${userID}&password=${password}`,
+      contentType: 'application/json',
+      success: () => {
+        this.setState({
+          playUrl: `http://localhost:8081/oss/${record.owner}/${record.name}`
+        });
       },
+      error: (err) => {
+        message.error(`HIA鉴权失败！HIA ${err.status}: ${err.statusText}`);
+      },
+    });
+    this.setState({
+      playVisible: true
     });
   }
 
@@ -135,7 +145,20 @@ class VideoWrapper extends React.Component {
           owner: owner
         })
         let id = values.shareUrl.split('#')[1];
-        console.log("userID", owner, id);
+        let shareVideoInfo = [];
+        let price = "";
+        $.ajax({
+          url: `/record/videos?indexType=videoAttrib&videoID=${id}`,
+          contentType: 'application/json',
+          success: (res) => {
+            if (res.videoAttrib) {
+              price = res.videoAttrib[0].price
+            }
+          },
+          error: (err) => {
+            message.error(`获取视频信息失败！CMS ${err.status}: ${err.statusText}`);
+          },
+        });
         //根据videoID查询视频信息
         $.ajax({
           url: '/action.do',
@@ -154,7 +177,7 @@ class VideoWrapper extends React.Component {
           success: (res) => {
             if (res.data) {
               this.setState({
-                shareVideoInfo: res.data[0]
+                shareVideoInfo: { ...res.data[0], price: price }
               });
             }
           },
@@ -187,6 +210,7 @@ class VideoWrapper extends React.Component {
           visible: false
         });
         this.getVideos();
+        // location.reload();
       },
       error: (err) => {
         message.error(`购买失败！HIA ${err.status}: ${err.statusText}`);
@@ -230,7 +254,7 @@ class VideoWrapper extends React.Component {
       key: 'option',
       render: (text, record) => (
         <span>
-         <a onClick={()=>{this.onWatchVideo(record.videoID,record.url)}}>播放</a>
+         <a onClick={()=>{this.onPlayVideo(record)}}>播放</a>
         </span>
       ),
     }];
@@ -246,6 +270,7 @@ class VideoWrapper extends React.Component {
     };
     const data = [
       `视频名称：${this.state.shareVideoInfo.name}`,
+      `视频价格：${this.state.shareVideoInfo.price}`,
       `上传时间：${this.state.shareVideoInfo.create_time}`,
       `发布时间：${this.state.shareVideoInfo.modify_time}`,
     ];
@@ -282,6 +307,7 @@ class VideoWrapper extends React.Component {
     return (
       <div>
         <Row type={'flex'} justify="center">
+          <VideoPlay visible={this.state.playVisible} playVisibleChange={this.playVisibleChange} playUrl={this.state.playUrl}/>
           <Col span={23} style={{fontSize:14+'px',marginTop:24+'px'}}>
             <Icon type="video-camera" style={{marginRight:8+'px'}} />已购买视频列表
             <Button icon="reload" style={{float:"right"}} onClick={this.onReload}>刷新</Button>

@@ -2,36 +2,19 @@ import React from "react";
 import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message, Divider } from "antd";
 import $ from "jquery";
 import Clipboard from "clipboard";
+import moment from "moment";
+import VideoPlay from "./VideoPlay";
 import styles from "./VideoRelease.less";
 import { userID, password } from "../../utils/utils";
 const FormItem = Form.Item;
-const dataSource = [{
-  key: 2,
-  id: 2,
-  name: "kkk2.flv",
-  pp: "",
-  owner: "zxy",
-  create_time: "2017-12-28T00:00:00+08:00",
-  modify_time: "2018-01-17T14:39:06+08:00",
-  del: 0,
-  pub: 1
-}, {
-  key: 4,
-  id: 4,
-  name: "test.flv",
-  pp: "test.jpg",
-  owner: "zxy",
-  create_time: "2017-12-24T00:00:00+08:00",
-  modify_time: "2018-01-17T14:39:06+08:00",
-  del: 1,
-  pub: 1
-}];
 
 class VideoWrapper extends React.Component {
   state = {
     dataSource: [],
     visible: false,
     loading: true,
+    playVisible: false,
+    playUrl: ''
   }
 
   //获取已发布的视频
@@ -63,8 +46,8 @@ class VideoWrapper extends React.Component {
                     key: index,
                     name: ele.name,
                     id: ele.id,
-                    create_time: ele.create_time,
-                    modify_time: ele.modify_time,
+                    create_time: moment(ele.create_time).format("YYYY-MM-DD HH:mm:ss"),
+                    modify_time: moment(ele.modify_time).format("YYYY-MM-DD HH:mm:ss"),
                     price: item.price,
                     buys: item.buys,
                   });
@@ -73,21 +56,26 @@ class VideoWrapper extends React.Component {
             }) : null;
             console.log("result", result);
             this.setState({
-              dataSource: result
+              dataSource: result,
+              loading: false,
             });
           },
           error: (err) => {
             message.error(`获取数据失败！CMS ${err.status}: ${err.statusText}`);
+            this.setState({
+              loading: false
+            });
           },
         });
       },
       error: (err) => {
         message.error(`获取数据失败！HIA ${err.status}: ${err.statusText}`);
+        this.setState({
+          loading: false
+        });
       },
     });
-    this.setState({
-      loading: false
-    });
+
   }
 
   componentDidMount() {
@@ -96,22 +84,26 @@ class VideoWrapper extends React.Component {
   }
 
   //播放视频
-  onPlayVideo = (videoID) => {
+  playVisibleChange = (visible) => {
+    this.setState({
+      playVisible: visible
+    });
+  }
+  onPlayVideo = (record) => {
     $.ajax({
-      url: `/videos/${videoID}?${userID}`,
-      contentType: "application/json",
-      statusCode: {
-        200: (xhr) => {
-          message.success('播放视频');
-        },
-        500: (xhr) => {
-          message.error(`statusCode:500,播放失败！`);
-        },
-        400: (xhr) => {
-          console.log("上传失败！400")
-          message.error(`statusCode:400,播放失败！`);
-        }
+      url: `/video/${record.id}?userID=${userID}&password=${password}`,
+      contentType: 'application/json',
+      success: () => {
+        this.setState({
+          playUrl: `http://localhost:8081/oss/${userID}/${record.name}`
+        });
       },
+      error: (err) => {
+        message.error(`HIA鉴权失败！HIA ${err.status}: ${err.statusText}`);
+      },
+    });
+    this.setState({
+      playVisible: true
     });
   }
 
@@ -222,6 +214,7 @@ class VideoWrapper extends React.Component {
     return (
       <div>
         <Row type={'flex'} justify="center">
+          <VideoPlay visible={this.state.playVisible} playVisibleChange={this.playVisibleChange} playUrl={this.state.playUrl}/>
           <Col span={23} style={{fontSize:14+'px',marginTop:24+'px'}}>
             <Icon type="video-camera" style={{marginRight:8+'px'}} />已发布视频列表
             <Button icon="reload" style={{float:"right"}} onClick={this.onReload}>刷新</Button>

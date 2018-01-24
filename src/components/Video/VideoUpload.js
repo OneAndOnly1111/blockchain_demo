@@ -2,31 +2,11 @@ import React from "react";
 import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message, Divider, Upload, InputNumber } from "antd";
 import $ from "jquery";
 import styles from "./VideoUpload.less";
+import moment from "moment";
 import Clipboard from "clipboard";
 import { userID, password } from "../../utils/utils";
 import VideoPlay from "./VideoPlay";
 const FormItem = Form.Item;
-const dataSource = [{
-  key: 7,
-  id: 7,
-  name: "kkk2.flv",
-  pp: "",
-  owner: "zxy",
-  create_time: "2017-12-28T00:00:00+08:00",
-  modify_time: "2018-01-17T14:39:06+08:00",
-  del: 0,
-  pub: 1
-}, {
-  key: 6,
-  id: 6,
-  name: "test.flv",
-  pp: "test.jpg",
-  owner: "zxy",
-  create_time: "2017-12-24T00:00:00+08:00",
-  modify_time: "2018-01-17T14:39:06+08:00",
-  del: 1,
-  pub: 1
-}];
 
 class VideoWrapper extends React.Component {
   state = {
@@ -57,6 +37,7 @@ class VideoWrapper extends React.Component {
         if (res) {
           let result = [];
           res.data.map((item, index) => {
+            item.create_time = moment(item.create_time).format("YYYY-MM-DD HH:mm:ss");
             result.push({
               ...item,
               key: index
@@ -64,41 +45,36 @@ class VideoWrapper extends React.Component {
           });
           this.setState({
             dataSource: result,
+            loading: false,
           });
         }
       },
       error: (err) => {
         message.error(`获取数据失败！${err.status}: ${err.statusText}`);
+        this.setState({
+          loading: false
+        });
       },
-    });
-    this.setState({
-      loading: false
     });
   }
 
   componentDidMount() {
     this.getVideos();
-    new Clipboard('.btn');
   }
 
   //上传视频
   handleUpload = () => {
     const { fileList } = this.state;
-    var formData = new FormData();
-    formData.append("file", fileList[0]);
-    console.log("formData", formData);
-    // fileList.forEach((file) => {
-    //   formData.append('files[]', file);
-    // });
+    console.log("fileList", fileList);
+    // var formData = new FormData();
+    // formData.append("file", fileList[0]);
     this.setState({
       uploading: true,
     });
-    let file = fileList[0].size;
-    console.log("fileList", fileList);
     $.ajax({
       url: `/oss/${userID}/${fileList[0].name}`,
       type: 'put',
-      data: formData,
+      data: fileList[0],
       cache: false,
       processData: false,
       contentType: false,
@@ -163,9 +139,7 @@ class VideoWrapper extends React.Component {
   onReleaseVideo = (e) => {
     e.preventDefault();
     this.props.form.validateFields((err, values) => {
-      console.log('Received values of form: ', values);
       if (!err) {
-        console.log('Received values of form: ', values);
         const { videoID, videoName } = this.state;
         //与HIA交互
         $.ajax({
@@ -225,22 +199,9 @@ class VideoWrapper extends React.Component {
       url: `/video/${record.id}?userID=${userID}&password=${password}`,
       contentType: 'application/json',
       success: () => {
-        var url = `http://localhost:8081/oss/${userID}/${record.name}`;
-        console.log("url", url)
-        window.open(url, '_self');
         this.setState({
           playUrl: `http://localhost:8081/oss/${userID}/${record.name}`
         });
-        // $.ajax({
-        //   url: `/oss/${userID}/${record.name}`,
-        //   contentType: 'application/json',
-        //   success: (res) => {
-
-        //   },
-        //   error: (err) => {
-        //     message.error(`播放失败！CMS ${err.status}: ${err.statusText}`);
-        //   },
-        // })
       },
       error: (err) => {
         message.error(`HIA鉴权失败！HIA ${err.status}: ${err.statusText}`);
@@ -316,9 +277,9 @@ class VideoWrapper extends React.Component {
       key: 'option',
       render: (text, record) => (
         <span>
-          <a onClick={()=>{this.onPlayVideo(record)}} className="playBtn" data-clipboard-text={this.state.playUrl}>播放</a>
+          <a onClick={()=>{this.onPlayVideo(record)}}>播放</a>
           <Divider type="vertical" />
-          <a onClick={(e)=>{this.showReleaseModal(e,record.id,record.name)}} disabled={(record.pub==1&&record.del==1)}>{record.pub==0?"发布":"已发布"}</a>
+          <a onClick={(e)=>{this.showReleaseModal(e,record.id,record.name)}} disabled={(record.pub==1)}>{record.pub==0?"发布":"已发布"}</a>
           {/*<Divider type="vertical" />
           <a onClick={()=>{this.onRemoveVideo(record.name)}} disabled={record.del==1}>{record.del==0?"删除":"已删除"}</a>*/}
         </span>
@@ -347,7 +308,6 @@ class VideoWrapper extends React.Component {
         });
       },
       beforeUpload: (file) => {
-        console.log("beforeUpload", file);
         this.setState(({ fileList }) => ({
           fileList: [...fileList, file],
           file: file,
@@ -361,7 +321,7 @@ class VideoWrapper extends React.Component {
     return (
       <div>
         <Row type={'flex'} justify="center">
-          {/*<VideoPlay visible={this.state.playVisible} playVisibleChange={this.playVisibleChange} playUrl={this.state.playUrl}/>*/}
+          <VideoPlay visible={this.state.playVisible} playVisibleChange={this.playVisibleChange} playUrl={this.state.playUrl}/>
           <Col span={23} style={{fontSize:14+'px',marginTop:24+'px'}}>
             <Icon type="video-camera" style={{marginRight:8+'px'}} />已上传视频列表
             <Button icon="reload" style={{float:"right",marginLeft:8+'px'}} onClick={this.onReload}>刷新</Button>
@@ -399,23 +359,13 @@ class VideoWrapper extends React.Component {
           <Form>
             <FormItem
               {...formItemLayout}
-              label="定价"
+              label="视频定价"
             >
               {getFieldDecorator('price', {
                 initialValue:0,
                 rules: [{ required: true, message: '请填写产品定价！' }],
               })(
-                <InputNumber formatter={value => `￥ ${value}`} style={{width:150+'px'}} />
-              )}
-            </FormItem>
-            <FormItem
-              {...formItemLayout}
-              label="密码确认"
-            >
-              {getFieldDecorator('password', {
-                rules: [{ required: true, message: '请输入你的密码进行验证！' }],
-              })(
-                <Input type="password" style={{width:200+'px'}} />
+                <InputNumber min={0} formatter={value => `￥ ${value}`} style={{width:150+'px'}} />
               )}
             </FormItem>
           </Form>

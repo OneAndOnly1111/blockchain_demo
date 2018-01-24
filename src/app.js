@@ -4,20 +4,40 @@ import LoginLayout from "./layouts/LoginLayout";
 import BasicLayout from "./layouts/BasicLayout";
 import "./styles/main.css";
 import "../node_modules/clipboard/dist/clipboard.min.js";
+import { userID, password } from './utils/utils';
+import $ from "jquery";
 
 export default class App extends React.Component {
   state = {
     isAuthenticated: localStorage.getItem("userID") ? true : false,
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    // location.reload();
-    if (this.state.isAuthenticated == nextState.isAuthenticated) {
-      return false;
-    } else {
-      return true;
-    }
+  componentDidMount() {
+    $.ajax({
+      url: `/record/user?userID=${userID}&password=${password}`,
+      contentType: 'application/json',
+      success: (res) => {
+        console.log("users-info--app", res)
+        if (res.users) {
+          let balance = res.users[0].balance;
+          let userName = res.users[0].UserName;
+          this.setState({
+            balance: balance,
+            userName: userName
+          });
+        }
+      }
+    });
   }
+
+  // shouldComponentUpdate(nextProps, nextState) {
+  // location.reload();
+  // if (this.state.isAuthenticated == nextState.isAuthenticated) {
+  //   return false;
+  // } else {
+  //   return true;
+  // }
+  // }
 
   subscribeAuth = (auth) => {
     this.setState({
@@ -31,7 +51,7 @@ export default class App extends React.Component {
         <div>
           <Switch>
              <PublicRoute path="/login" component={LoginLayout} subscribeAuth={this.subscribeAuth} />
-             <PrivateRoute path="/" isAuthenticated={this.state.isAuthenticated} component={BasicLayout} subscribeAuth={this.subscribeAuth} />
+             <PrivateRoute path="/" isAuthenticated={this.state.isAuthenticated} component={BasicLayout} subscribeAuth={this.subscribeAuth} balance={this.state.balance} userName={this.state.userName} />
           </Switch>
         </div>
       </Router>
@@ -39,9 +59,9 @@ export default class App extends React.Component {
   }
 }
 
-const PrivateRoute = ({ isAuthenticated, component: Component, subscribeAuth, ...rest }) => (
+const PrivateRoute = ({ isAuthenticated, component: Component, subscribeAuth, balance, userName, ...rest }) => (
 <Route { ...rest } render={
-  props => (isAuthenticated? (<Component {...props} subscribeAuth={subscribeAuth} />): (<Redirect to={{ pathname: '/login', state: { from: props.location }}}/>))
+  props => (isAuthenticated? (<Component {...props} subscribeAuth={subscribeAuth} balance={balance} userName={userName} />): (<Redirect to={{ pathname: '/login', state: { from: props.location }}}/>))
 }
 />
 )

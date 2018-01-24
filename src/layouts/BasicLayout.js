@@ -7,7 +7,8 @@ import GlobalFooter from "../components/GlobalFooter";
 import NotFound from "../components/Exception/404";
 import { getRouterData } from "../common/route.js";
 import { getMenuData } from "../common/menu.js";
-
+import { userID, password } from "../utils/utils";
+import $ from "jquery";
 /**
  * 根据菜单取得重定向地址.
  */
@@ -55,16 +56,31 @@ export default class BasicLayout extends React.Component {
     });
   }
 
-  // componentDidUpdate(prevProps, prevState) {
-  //   this.props.subscribeAuth(true);
-  // }
+  componentDidMount() {
+    // $.ajax({
+    //   url: `/record/user?userID=${userID}&password=${password}`,
+    //   contentType: 'application/json',
+    //   success: (res) => {
+    //     console.log("users-info", res)
+    //     if (res.users) {
+    //       let balance = res.users[0].balance;
+    //       let userName = res.users[0].UserName;
+    //       this.setState({
+    //         balance: balance,
+    //         userName: userName
+    //       });
+    //     }
+    //   }
+    // });
+  }
 
-  // shouldComponentUpdate(nextProps, nextState) {
-  //   console.log("sider-menu:BasicLayout", nextProps, nextState)
-  // }
+  componentDidUpdate(prevProps, prevState) {
+    console.log("BasicLayout-did-update")
+  }
+
   render() {
     const { collapsed } = this.state;
-    console.log("redirectData", redirectData);
+    console.log("BasicLayout-props---", this.props);
     return (
       <div>
         <Layout>
@@ -77,6 +93,8 @@ export default class BasicLayout extends React.Component {
               collapsed={collapsed}
               onCollapse={this.toggle}
               subscribeAuth={this.props.subscribeAuth}
+              balance={this.props.balance}
+              userName={this.props.userName}
             />
             <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', minHeight: 280 }}>
               <Switch>
