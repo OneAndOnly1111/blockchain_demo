@@ -65,7 +65,6 @@ class VideoWrapper extends React.Component {
   //上传视频
   handleUpload = () => {
     const { fileList } = this.state;
-    console.log("fileList", fileList);
     // var formData = new FormData();
     // formData.append("file", fileList[0]);
     this.setState({
@@ -199,8 +198,9 @@ class VideoWrapper extends React.Component {
       url: `/video/${record.id}?userID=${userID}&password=${password}`,
       contentType: 'application/json',
       success: () => {
+        let href = window.location.href.split("/")[2];
         this.setState({
-          playUrl: `http://localhost:8081/oss/${userID}/${record.name}`
+          playUrl: `http://${href}/oss/${userID}/${record.name}`
         });
       },
       error: (err) => {

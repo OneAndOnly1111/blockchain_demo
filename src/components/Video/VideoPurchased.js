@@ -12,7 +12,6 @@ class VideoWrapper extends React.Component {
   state = {
     dataSource: [],
     loading: true,
-    btnLoading: false,
     visible: false,
     current: 0,
     shareUrl: '',
@@ -28,6 +27,9 @@ class VideoWrapper extends React.Component {
       url: `/record/transactions?userID=${userID}`,
       contentType: 'application/json',
       success: (hia) => {
+        this.setState({
+          loading: false
+        });
         if (hia.transactions) {
           let result = [];
           hia.transactions.map((item, index) => {
@@ -62,7 +64,6 @@ class VideoWrapper extends React.Component {
                   this.setState({
                     dataSource: result,
                     loading: false,
-                    btnLoading: false,
                   });
                 }
               },
@@ -77,7 +78,6 @@ class VideoWrapper extends React.Component {
         message.error(`获取数据失败！HIA ${err.status}: ${err.statusText}`);
         this.setState({
           loading: false,
-          btnLoading: false,
         });
       },
     });
@@ -98,8 +98,9 @@ class VideoWrapper extends React.Component {
       url: `/video/${record.id}?userID=${userID}&password=${password}`,
       contentType: 'application/json',
       success: () => {
+        let href = window.location.href.split("/")[2];
         this.setState({
-          playUrl: `http://localhost:8081/oss/${record.owner}/${record.name}`
+          playUrl: `http://${href}/oss/${record.owner}/${record.name}`
         });
       },
       error: (err) => {
@@ -146,23 +147,11 @@ class VideoWrapper extends React.Component {
         })
         let id = values.shareUrl.split('#')[1];
         let shareVideoInfo = [];
-        let price = "";
-        $.ajax({
-          url: `/record/videos?indexType=videoAttrib&videoID=${id}`,
-          contentType: 'application/json',
-          success: (res) => {
-            if (res.videoAttrib) {
-              price = res.videoAttrib[0].price
-            }
-          },
-          error: (err) => {
-            message.error(`获取视频信息失败！CMS ${err.status}: ${err.statusText}`);
-          },
-        });
         //根据videoID查询视频信息
         $.ajax({
           url: '/action.do',
           type: 'post',
+          async: false,
           contentType: 'application/json',
           data: JSON.stringify({
             type: "find",
@@ -174,12 +163,34 @@ class VideoWrapper extends React.Component {
               }
             }
           }),
-          success: (res) => {
-            if (res.data) {
-              this.setState({
-                shareVideoInfo: { ...res.data[0], price: price }
+          success: (cms) => {
+            let price = "";
+            if (cms.data) {
+              // 查询视频价格
+              $.ajax({
+                url: `/record/videos?indexType=videoAttrib&videoID=${id}`,
+                async: false,
+                contentType: 'application/json',
+                success: (hia) => {
+                  if (hia.videoAttrib) {
+                    price = hia.videoAttrib[0].price
+                  }
+                },
+                error: (err) => {
+                  message.error(`获取价格信息失败！CMS ${err.status}: ${err.statusText}`);
+                },
               });
             }
+            //set info
+            this.setState({
+              shareVideoInfo: {
+                id: cms.data[0].id,
+                name: cms.data[0].name,
+                create_time: moment(cms.data[0].create_time).format("YYYY-MM-DD HH:mm:ss"),
+                modify_time: moment(cms.data[0].modify_time).format("YYYY-MM-DD HH:mm:ss"),
+                price: `￥ ${price}` || "获取失败..."
+              }
+            });
           },
           error: (err) => {
             message.error(`获取视频信息失败！CMS ${err.status}: ${err.statusText}`);
@@ -295,7 +306,7 @@ class VideoWrapper extends React.Component {
     }, {
       title: '第二步：购买视频',
       content: (<div>
-        <h3 style={{ marginTop: '16px' }}>视频信息</h3>
+        <h3 style={{ marginBottom: '16px', marginLeft:'8px'}}>视频信息</h3>
         <List
           size="small"
           bordered

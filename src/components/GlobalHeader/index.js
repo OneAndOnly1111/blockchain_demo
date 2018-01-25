@@ -7,12 +7,11 @@ import styles from './index.less';
 import avatar from '../../assets/avatar.jpg';
 import { userID, password } from '../../utils/utils.js';
 const { Header } = Layout;
-// const userID = "demo";
 export default class GlobalHeader extends PureComponent {
 
   state = {
-    balance: this.props.balance || '0',
-    userName: this.props.userName || 'demo',
+    // balance: this.props.balance || '0',
+    // userName: this.props.userName || 'demo',
   }
 
   toggle = () => {
@@ -23,37 +22,35 @@ export default class GlobalHeader extends PureComponent {
   handleMenuClick = (item, key, keyPath) => {
     if (item.key == "logout") {
       localStorage.clear();
-      localStorage.removeItem("userID");
-      localStorage.removeItem("password");
       this.props.subscribeAuth(false);
     }
   }
 
-  //获取个人信息
-  // getUserInfo = () => {
-  //   $.ajax({
-  //     url: `/record/user?userID=${userID}&password=${password}`,
-  //     contentType: 'application/json',
-  //     success: (res) => {
-  //       console.log("users-info", res)
-  //       if (res.users) {
-  //         this.setState({
-  //           balance: res.users[0].balance,
-  //           userName: res.users[0].UserName
-  //         });
-  //       }
-  //     }
-  //   });
-  // }
+  componentDidMount() {
+    this.getUserInfo();
+    window.setInterval(this.getUserInfo, 60 * 1000);
+  }
 
-  // shouldComponentUpdate(nextProps, nextState) {
-  //   console.log("header-sdm", nextProps, nextState)
-  //   return true
-  // }
+  //获取个人信息
+  getUserInfo = () => {
+    $.ajax({
+      url: `/record/user?userID=${userID}&password=${password}`,
+      contentType: 'application/json',
+      async: false,
+      success: (res) => {
+        console.log("users-info", res)
+        if (res.user) {
+          this.setState({
+            balance: res.user[0].balance,
+            userName: res.user[0].userName
+          });
+        }
+      }
+    });
+  }
 
   render() {
-    console.log("props--header", this.props)
-    console.log("balance", this.state.balance, this.state.userName)
+    console.log("GlobalHeader--render!!!", this.props, this.state);
     const { collapsed, subscribeAuth } = this.props;
     const menu = (
       <Menu className={styles.menu} selectedKeys={[]} onClick={this.handleMenuClick}>

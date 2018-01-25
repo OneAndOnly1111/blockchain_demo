@@ -1,36 +1,19 @@
-let url = window.location.href;
-url = url.split("/")
-console.log("common-muenu-url", url[3]);
-let path = url[3];
 const menuData = [{
-    name: '视频上传',
-    icon: 'upload',
-    path: 'video/upload',
-    hideInMenu: false,
-    // hideInMenu: !path || path == 'copyright' ? false : true
-  }, {
-    name: '发布列表',
-    icon: 'profile',
-    path: 'video/release',
-    hideInMenu: false,
-    // hideInMenu: path == 'normalUser' || path == 'purchaseRecord' ? false : true
-  }
-  // , {
-  //   name: '分享解析',
-  //   // icon: 'video-camera',  calculator
-  //   icon: 'retweet',
-  //   path: 'video/analyse',
-  //   hideInMenu: false,
-  //   // hideInMenu: path == 'normalUser' || path == 'purchaseRecord' ? false : true
-  // }
-  , {
-    name: '解析购买',
-    icon: 'pay-circle-o',
-    path: 'video/purchased',
-    hideInMenu: false,
-    // hideInMenu: path == 'normalUser' || path == 'purchaseRecord' ? false : true
-  }
-];
+  name: '视频上传',
+  icon: 'upload',
+  path: 'video/upload',
+  hideInMenu: false,
+}, {
+  name: '发布列表',
+  icon: 'profile',
+  path: 'video/release',
+  hideInMenu: false,
+}, {
+  name: '解析购买',
+  icon: 'pay-circle-o',
+  path: 'video/purchased',
+  hideInMenu: false,
+}];
 
 function formatter(data, parentPath = '', parentAuthority) {
   return data.map((item) => {

@@ -1,6 +1,8 @@
 import $ from "jquery";
 export const userID = localStorage.getItem("userID");
 export const password = localStorage.getItem("password");
+export const node = localStorage.getItem("node");
+
 export const getUserInfo = () => {
   $.ajax({
     url: `/record/user?userID=${userID}&password=${password}`,

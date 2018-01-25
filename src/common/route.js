@@ -1,8 +1,5 @@
 import React from 'react';
 import { Route } from "react-router-dom";
-// import Video from "../components/VideoCopyright";
-import VideoNormalUser from "../components/VideoNormalUser";
-// import PurchaseRecord from "../components/VideoNormalUser/purchaseRecord";
 import VideoUpload from "../components/Video/VideoUpload";
 import VideoRelease from "../components/Video/VideoRelease";
 import VideoPurchased from "../components/Video/VideoPurchased";
@@ -20,11 +17,6 @@ const routerData = [{
 }, {
   path: '/video/release',
   component: VideoRelease,
-  exact: true,
-  authority: true,
-}, {
-  path: '/video/analyse',
-  component: VideoNormalUser,
   exact: true,
   authority: true,
 }, {

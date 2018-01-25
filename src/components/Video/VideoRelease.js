@@ -94,8 +94,9 @@ class VideoWrapper extends React.Component {
       url: `/video/${record.id}?userID=${userID}&password=${password}`,
       contentType: 'application/json',
       success: () => {
+        let href = window.location.href.split("/")[2];
         this.setState({
-          playUrl: `http://localhost:8081/oss/${userID}/${record.name}`
+          playUrl: `http://${href}/oss/${userID}/${record.name}`
         });
       },
       error: (err) => {

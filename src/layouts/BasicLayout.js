@@ -56,31 +56,9 @@ export default class BasicLayout extends React.Component {
     });
   }
 
-  componentDidMount() {
-    // $.ajax({
-    //   url: `/record/user?userID=${userID}&password=${password}`,
-    //   contentType: 'application/json',
-    //   success: (res) => {
-    //     console.log("users-info", res)
-    //     if (res.users) {
-    //       let balance = res.users[0].balance;
-    //       let userName = res.users[0].UserName;
-    //       this.setState({
-    //         balance: balance,
-    //         userName: userName
-    //       });
-    //     }
-    //   }
-    // });
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    console.log("BasicLayout-did-update")
-  }
-
   render() {
     const { collapsed } = this.state;
-    console.log("BasicLayout-props---", this.props);
+    console.log("BasicLayout--render!!!--props,---state", this.props, this.state);
     return (
       <div>
         <Layout>
@@ -93,8 +71,6 @@ export default class BasicLayout extends React.Component {
               collapsed={collapsed}
               onCollapse={this.toggle}
               subscribeAuth={this.props.subscribeAuth}
-              balance={this.props.balance}
-              userName={this.props.userName}
             />
             <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', minHeight: 280 }}>
               <Switch>

@@ -1,12 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Form, Button, Icon, Input, Checkbox, message, notification } from "antd";
+import { Form, Button, Icon, Input, Checkbox, message, notification, Radio } from "antd";
 import $ from "jquery";
-import md5 from "md5";
 import styles from "./LoginLayout.less";
 import logo from "../assets/logo.ico";
 import GlobalFooter from "../components/GlobalFooter";
-
+const RadioGroup = Radio.Group;
 const FormItem = Form.Item;
 const copyright = <div>Copyright <Icon type="copyright" /> 2018 云熵网络科技技术部出品</div>;
 const links = [{
@@ -30,19 +29,19 @@ class LoginForm extends React.Component {
     e.preventDefault();
     this.props.form.validateFields((err, values) => {
       if (!err) {
-        console.log("login-values", values)
         $.ajax({
-          url: '/users/login',
+          url: `/users/login`,
           type: 'post',
           data: JSON.stringify({
             userID: +values.userID,
             password: values.password
           }),
           success: () => {
-            //将用户id和pwd存储到localStorage
+            //将用户id和pwd及访问节点存储到localStorage
             localStorage.clear();
             localStorage.setItem("userID", values.userID);
             localStorage.setItem("password", values.password);
+            localStorage.setItem("node", values.node);
             this.props.subscribeAuth(true);
             this.props.history.push("/");
             location.reload();
@@ -72,7 +71,7 @@ class LoginForm extends React.Component {
               <span className={styles.title}>Demo</span>
             </Link>
           </div>
-          <div className={styles.desc}>Ant Design 是西湖区最具影响力的 Web 设计规范</div>
+          <div className={styles.desc}></div>
         </div>
         <div className={styles.main}>
           <Form onSubmit={this.handleSubmit}>
@@ -88,6 +87,18 @@ class LoginForm extends React.Component {
                 rules: [{ required: true, message: '请填写密码！' }],
               })(
                 <Input size="large" prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="密码" />
+              )}
+            </FormItem>
+            <FormItem label="访问节点">
+              {getFieldDecorator('node', {
+                initialValue:"a",
+                rules: [{ required: true, message: '请选择要访问的节点！' }],
+              })(
+                <RadioGroup>
+                  <Radio value={"a"}>节点A</Radio>
+                  <Radio value={"b"}>节点B</Radio>
+                  <Radio value={"c"}>节点C</Radio>
+                </RadioGroup>
               )}
             </FormItem>
             <FormItem>
