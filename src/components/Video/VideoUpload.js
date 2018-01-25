@@ -4,7 +4,7 @@ import $ from "jquery";
 import styles from "./VideoUpload.less";
 import moment from "moment";
 import Clipboard from "clipboard";
-import { userID, password } from "../../utils/utils";
+import { userID, password, node } from "../../utils/utils";
 import VideoPlay from "./VideoPlay";
 const FormItem = Form.Item;
 
@@ -13,6 +13,7 @@ class VideoWrapper extends React.Component {
     dataSource: [],
     loading: true,
     uploading: false,
+    publishing: false,
     fileList: [],
     visible: false,
     playVisible: false,
@@ -140,9 +141,10 @@ class VideoWrapper extends React.Component {
     this.props.form.validateFields((err, values) => {
       if (!err) {
         const { videoID, videoName } = this.state;
+        this.setState({ publishing: true });
         //与HIA交互
         $.ajax({
-          url: `/videos/${videoID}`,
+          url: `/${node}/videos/${videoID}`,
           type: 'post',
           contentType: 'application/json',
           data: JSON.stringify({
@@ -169,19 +171,28 @@ class VideoWrapper extends React.Component {
               }),
               success: () => {
                 this.getVideos();
+                this.setState({
+                  visible: false,
+                  publishing: false,
+                });
                 message.success('发布成功！');
               },
               error: (err) => {
                 message.error(`发布失败！CMS 返回${err.status}: ${err.statusText}`, 3);
+                this.setState({
+                  visible: false,
+                  publishing: false,
+                });
               },
             });
           },
           error: (err) => {
             message.error(`发布失败！HIA 返回${err.status}: ${err.statusText}`, 3);
+            this.setState({
+              visible: false,
+              publishing: false,
+            });
           },
-        });
-        this.setState({
-          visible: false
         });
       }
     });
@@ -195,7 +206,7 @@ class VideoWrapper extends React.Component {
   }
   onPlayVideo = (record) => {
     $.ajax({
-      url: `/video/${record.id}?userID=${userID}&password=${password}`,
+      url: `/${node}/video/${record.id}?userID=${userID}&password=${password}`,
       contentType: 'application/json',
       success: () => {
         let href = window.location.href.split("/")[2];
@@ -317,7 +328,7 @@ class VideoWrapper extends React.Component {
       fileList: this.state.fileList,
     };
     const { getFieldDecorator } = this.props.form;
-    const { loading, uploading, dataSource, visible } = this.state;
+    const { loading, uploading, dataSource, visible, publishing } = this.state;
     return (
       <div>
         <Row type={'flex'} justify="center">
@@ -355,6 +366,12 @@ class VideoWrapper extends React.Component {
           visible={visible}
           onCancel={this.hideReleaseModal}
           onOk={this.onReleaseVideo}
+          footer={[
+            <Button key="back" onClick={this.hideReleaseModal}>取消</Button>,
+            <Button key="submit" type="primary" loading={publishing} onClick={this.onReleaseVideo}>
+              {publishing ? '发布中' : '发布'}
+            </Button>,
+          ]}
         >
           <Form>
             <FormItem

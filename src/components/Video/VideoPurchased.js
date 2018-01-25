@@ -4,7 +4,7 @@ import $ from "jquery";
 import moment from "moment";
 import VideoPlay from "./VideoPlay";
 import styles from "./VideoPurchased.less";
-import { userID, password } from "../../utils/utils";
+import { userID, password, node } from "../../utils/utils";
 const FormItem = Form.Item;
 const Step = Steps.Step;
 
@@ -24,7 +24,7 @@ class VideoWrapper extends React.Component {
   getVideos = () => {
     //HIA
     $.ajax({
-      url: `/record/transactions?userID=${userID}`,
+      url: `/${node}/record/transactions?userID=${userID}`,
       contentType: 'application/json',
       success: (hia) => {
         this.setState({
@@ -95,7 +95,7 @@ class VideoWrapper extends React.Component {
   }
   onPlayVideo = (record) => {
     $.ajax({
-      url: `/video/${record.id}?userID=${userID}&password=${password}`,
+      url: `/${node}/video/${record.id}?userID=${userID}&password=${password}`,
       contentType: 'application/json',
       success: () => {
         let href = window.location.href.split("/")[2];
@@ -168,7 +168,7 @@ class VideoWrapper extends React.Component {
             if (cms.data) {
               // 查询视频价格
               $.ajax({
-                url: `/record/videos?indexType=videoAttrib&videoID=${id}`,
+                url: `/${node}/record/videos?indexType=videoAttrib&videoID=${id}`,
                 async: false,
                 contentType: 'application/json',
                 success: (hia) => {
@@ -208,7 +208,7 @@ class VideoWrapper extends React.Component {
   //购买视频
   buyVideo = () => {
     $.ajax({
-      url: `/transaction/${this.state.shareVideoInfo.id}`,
+      url: `/${node}/transaction/${this.state.shareVideoInfo.id}`,
       type: 'post',
       contentType: 'application/json',
       data: JSON.stringify({

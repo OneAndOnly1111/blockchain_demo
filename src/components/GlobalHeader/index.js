@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import $ from "jquery";
 import styles from './index.less';
 import avatar from '../../assets/avatar.jpg';
-import { userID, password } from '../../utils/utils.js';
+import { userID, password, node } from '../../utils/utils.js';
 const { Header } = Layout;
 export default class GlobalHeader extends PureComponent {
 
@@ -28,15 +28,15 @@ export default class GlobalHeader extends PureComponent {
 
   componentDidMount() {
     this.getUserInfo();
-    window.setInterval(this.getUserInfo, 60 * 1000);
+    window.setInterval(this.getUserInfo, 5 * 1000);
   }
 
   //获取个人信息
   getUserInfo = () => {
     $.ajax({
-      url: `/record/user?userID=${userID}&password=${password}`,
+      url: `/${node}/record/user?userID=${userID}&password=${password}`,
       contentType: 'application/json',
-      async: false,
+      // async: false,
       success: (res) => {
         console.log("users-info", res)
         if (res.user) {

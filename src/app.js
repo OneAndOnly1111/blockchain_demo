@@ -4,7 +4,7 @@ import LoginLayout from "./layouts/LoginLayout";
 import BasicLayout from "./layouts/BasicLayout";
 import "./styles/main.css";
 import "../node_modules/clipboard/dist/clipboard.min.js";
-import { userID, password } from './utils/utils';
+import { userID, password, node } from './utils/utils';
 import $ from "jquery";
 
 export default class App extends React.Component {

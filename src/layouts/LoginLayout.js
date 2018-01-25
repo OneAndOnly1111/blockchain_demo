@@ -30,7 +30,7 @@ class LoginForm extends React.Component {
     this.props.form.validateFields((err, values) => {
       if (!err) {
         $.ajax({
-          url: `/users/login`,
+          url: `/${values.node}/users/login`,
           type: 'post',
           data: JSON.stringify({
             userID: +values.userID,
@@ -61,6 +61,16 @@ class LoginForm extends React.Component {
   }
 
   render() {
+    const formItemLayout = {
+      labelCol: {
+        xs: { span: 24 },
+        sm: { span: 6 },
+      },
+      wrapperCol: {
+        xs: { span: 24 },
+        sm: { span: 16 },
+      },
+    };
     const { getFieldDecorator } = this.props.form;
     return (
       <div className={styles.container}>
@@ -89,9 +99,8 @@ class LoginForm extends React.Component {
                 <Input size="large" prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="密码" />
               )}
             </FormItem>
-            <FormItem label="访问节点">
+            <FormItem label="访问节点" {...formItemLayout}>
               {getFieldDecorator('node', {
-                initialValue:"a",
                 rules: [{ required: true, message: '请选择要访问的节点！' }],
               })(
                 <RadioGroup>

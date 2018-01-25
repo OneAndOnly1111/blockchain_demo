@@ -14,49 +14,21 @@ module.exports = {
 		compress: true, //启用gzip 压缩
 		host: '0.0.0.0', //服务外部也可访问
 		port: 8081,
-		// proxy: {
-		// 	'/a/users': {
-		// 		// target: 'http://47.96.188.88:8080/', //http://hia.bchain.entropycode.com/
-		// 		target: 'http://hia.bchain.entropycode.com/',
-		// 		pathRewrite: { "^/a": "" },
-		// 	},
-		// 	'/videos': {
-		// 		// target: 'http://47.96.188.88:8080/',
-		// 		target: 'http://hia.bchain.entropycode.com/',
-		// 	},
-		// 	'/transaction': {
-		// 		// target: 'http://47.96.188.88:8080/',
-		// 		target: 'http://hia.bchain.entropycode.com/',
-		// 	},
-		// 	'/record/user': {
-		// 		target: 'http://hia.bchain.entropycode.com/',
-		// 	},
-		// 	'/record/transaction': {
-		// 		// target: 'http://47.96.188.88:8080/',
-		// 		target: 'http://hia.bchain.entropycode.com/',
-		// 	},
-		// 	'/record/videos': {
-		// 		// target: 'http://47.96.188.88:8080/',
-		// 		target: 'http://hia.bchain.entropycode.com/',
-		// 	},
-		// 	'/action.do': {
-		// 		// target: 'http://47.96.188.88:8989/',
-		// 		target: 'http://cms.bchain.entropycode.com/',
-		// 	},
-		// 	'/oss': {
-		// 		target: 'http://test-zxy-yunshang.oss-cn-beijing.aliyuncs.com/',
-		// 		secure: false,
-		// 		// pathRewrite: { "^/a": "" },
-		// 		changeOrigin: true
-		// 	},
-		// },
 		proxy: [{
-			context: ["/users", "/videos", "/transaction", "/record/user", "/record/transaction", "/record/videos"],
-			target: "http://hia.bchain.entropycode.com/",
+			context: ["/a/users", "/a/videos", "/a/transaction", "/a/record/user", "/a/record/transaction", "/a/record/videos"],
+			target: "http://47.96.188.88:8080/", //http://hia.bchain.entropycode.com/
 			pathRewrite: { "^/a": "" },
 		}, {
+			context: ["/b/users", "/b/videos", "/b/transaction", "/b/record/user", "/b/record/transaction", "/b/record/videos"],
+			target: "http://47.96.188.88:8080/",
+			pathRewrite: { "^/b": "" },
+		}, {
+			context: ["/c/users", "/c/videos", "/c/transaction", "/c/record/user", "/c/record/transaction", "/c/record/videos"],
+			target: "http://47.96.188.88:8080/",
+			pathRewrite: { "^/c": "" },
+		}, {
 			context: ["/action.do"],
-			target: 'http://cms.bchain.entropycode.com/',
+			target: 'http://47.96.188.88:8989/', // http://cms.bchain.entropycode.com/
 		}, {
 			context: ["/oss"],
 			target: 'http://test-zxy-yunshang.oss-cn-beijing.aliyuncs.com/',

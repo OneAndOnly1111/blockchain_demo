@@ -5,7 +5,7 @@ import Clipboard from "clipboard";
 import moment from "moment";
 import VideoPlay from "./VideoPlay";
 import styles from "./VideoRelease.less";
-import { userID, password } from "../../utils/utils";
+import { userID, password, node } from "../../utils/utils";
 const FormItem = Form.Item;
 
 class VideoWrapper extends React.Component {
@@ -21,7 +21,7 @@ class VideoWrapper extends React.Component {
   getVideos = () => {
     //HIA
     $.ajax({
-      url: `/record/videos?indexType=uploadRecord&userID=${userID}`,
+      url: `/${node}/record/videos?indexType=uploadRecord&userID=${userID}`,
       contentType: 'application/json',
       success: (hia) => {
         let result = [];
@@ -91,7 +91,7 @@ class VideoWrapper extends React.Component {
   }
   onPlayVideo = (record) => {
     $.ajax({
-      url: `/video/${record.id}?userID=${userID}&password=${password}`,
+      url: `/${node}/video/${record.id}?userID=${userID}&password=${password}`,
       contentType: 'application/json',
       success: () => {
         let href = window.location.href.split("/")[2];
