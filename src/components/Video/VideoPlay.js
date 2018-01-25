@@ -26,7 +26,7 @@ class VideoWrapper extends React.Component {
           onCancel = {this.handleCancel}
         >
           <div>
-            <video src={this.props.playUrl} type="video/mp4" autoPlay="autoPlay" controls="controls" height="600" width="950"></video>
+            <video src={this.props.playUrl} autoPlay="autoPlay" controls="controls" height="600" width="950"></video>
           </div>
         </Modal>
       </div>

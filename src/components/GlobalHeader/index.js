@@ -28,7 +28,11 @@ export default class GlobalHeader extends PureComponent {
 
   componentDidMount() {
     this.getUserInfo();
-    window.setInterval(this.getUserInfo, 5 * 1000);
+    this.loop = window.setInterval(this.getUserInfo, 5 * 1000);
+  }
+
+  componentWillUnmount() {
+    window.clearInterval(this.loop);
   }
 
   //获取个人信息
