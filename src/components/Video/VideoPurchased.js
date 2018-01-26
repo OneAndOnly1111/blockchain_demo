@@ -18,6 +18,7 @@ class VideoWrapper extends React.Component {
     shareVideoInfo: [],
     playVisible: false,
     playUrl: '',
+    buying: false,
   }
 
   //获取已购买的视频列表
@@ -207,6 +208,9 @@ class VideoWrapper extends React.Component {
 
   //购买视频
   buyVideo = () => {
+    this.setState({
+      buying: true
+    });
     $.ajax({
       url: `/${node}/transaction/${this.state.shareVideoInfo.id}`,
       type: 'post',
@@ -218,7 +222,8 @@ class VideoWrapper extends React.Component {
       success: () => {
         message.success("购买成功！");
         this.setState({
-          visible: false
+          visible: false,
+          buying: false,
         });
         this.getVideos();
         // location.reload();
@@ -226,7 +231,8 @@ class VideoWrapper extends React.Component {
       error: (err) => {
         message.error(`购买失败！HIA ${err.status}: ${err.statusText}`);
         this.setState({
-          visible: false
+          visible: false,
+          buying: false
         });
       },
     });
@@ -351,12 +357,12 @@ class VideoWrapper extends React.Component {
               {
                 this.state.current === steps.length - 1
                 &&
-                <Button type="primary" onClick={() => this.buyVideo()}>购买</Button>
+                <Button type="primary" loading={this.state.buying} onClick={() => this.buyVideo()}>{this.state.buying?'购买中':'购买'}</Button>
               }
               {
                 this.state.current > 0
                 &&
-                <Button style={{ marginLeft: 8 }} onClick={() => this.prev()}>
+                <Button style={{ marginLeft: 8 }} onClick={() => this.prev()} disabled={this.state.buying} >
                   上一步
                 </Button>
               }
