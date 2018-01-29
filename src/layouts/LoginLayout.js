@@ -135,7 +135,7 @@ class LoginForm extends React.Component {
               <Button size="large" type="primary" htmlType="submit" className={styles.login_btn} loading={this.state.logining} >
                 {this.state.logining ? '登录中...': '登录'}
               </Button>
-              或 <a href="">立即注册！</a>
+              或 <Link to="/register">立即注册！</Link>
             </FormItem>
           </Form>
         </div>
