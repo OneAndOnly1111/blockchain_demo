@@ -3,6 +3,7 @@ import { Route } from "react-router-dom";
 import VideoUpload from "../components/Video/VideoUpload";
 import VideoRelease from "../components/Video/VideoRelease";
 import VideoPurchased from "../components/Video/VideoPurchased";
+import RegisterLayout from "../layouts/RegisterLayout";
 
 const routerData = [{
   path: '/',
