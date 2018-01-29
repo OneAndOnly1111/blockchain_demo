@@ -24,11 +24,19 @@ const links = [{
 
 
 class LoginForm extends React.Component {
+
+  state = {
+    logining: false,
+  }
+
   /*登录验证*/
   handleSubmit = (e) => {
     e.preventDefault();
     this.props.form.validateFields((err, values) => {
       if (!err) {
+        this.setState({
+          logining: true
+        });
         $.ajax({
           url: `/${values.node}/users/login`,
           type: 'post',
@@ -42,6 +50,9 @@ class LoginForm extends React.Component {
             localStorage.setItem("userID", values.userID);
             localStorage.setItem("password", values.password);
             localStorage.setItem("node", values.node);
+            this.setState({
+              logining: false
+            });
             this.props.subscribeAuth(true);
             this.props.history.push("/");
             location.reload();
@@ -54,6 +65,9 @@ class LoginForm extends React.Component {
           },
           error: (err) => {
             message.error(`登陆失败！用户名或密码错误！${err.status}: ${err.statusText}`);
+            this.setState({
+              logining: false
+            });
           },
         });
       }
@@ -118,8 +132,8 @@ class LoginForm extends React.Component {
                 <Checkbox>记住密码</Checkbox>
               )}
               <a className={styles.forgot_pwd} href="">忘记密码</a>
-              <Button size="large" type="primary" htmlType="submit" className={styles.login_btn}>
-                登录
+              <Button size="large" type="primary" htmlType="submit" className={styles.login_btn} loading={this.state.logining} >
+                {this.state.logining ? '登录中...': '登录'}
               </Button>
               或 <a href="">立即注册！</a>
             </FormItem>
