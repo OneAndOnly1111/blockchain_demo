@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Switch, Redirect, withRouter } from "react-router-dom";
 import LoginLayout from "./layouts/LoginLayout";
+import RegisterLayout from "./layouts/RegisterLayout";
 import BasicLayout from "./layouts/BasicLayout";
 import "./styles/main.css";
 import "../node_modules/clipboard/dist/clipboard.min.js";
@@ -33,7 +34,8 @@ export default class App extends React.Component {
       <Router>
         <div>
           <Switch>
-             <PublicRoute path="/login" component={LoginLayout} subscribeAuth={this.subscribeAuth} />
+             <PublicRoute path="/user/login" component={LoginLayout} subscribeAuth={this.subscribeAuth} />
+             <PublicRoute path="/user/register" component={RegisterLayout} subscribeAuth={this.subscribeAuth} />
              <PrivateRoute path="/" isAuthenticated={this.state.isAuthenticated} component={BasicLayout} subscribeAuth={this.subscribeAuth} />
           </Switch>
         </div>
@@ -44,7 +46,7 @@ export default class App extends React.Component {
 
 const PrivateRoute = ({ isAuthenticated, component: Component, subscribeAuth, ...rest }) => (
 <Route { ...rest } render={
-  props => (isAuthenticated? (<Component {...props} subscribeAuth={subscribeAuth} />): (<Redirect to={{ pathname: '/login', state: { from: props.location }}}/>))
+  props => (isAuthenticated? (<Component {...props} subscribeAuth={subscribeAuth} />): (<Redirect to={{ pathname: '/user/login', state: { from: props.location }}}/>))
 }
 />
 )

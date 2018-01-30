@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Form, Button, Icon, Input, Checkbox, message, notification, Radio } from "antd";
 import $ from "jquery";
-import styles from "./LoginLayout.less";
+import styles from "./LoginRegister.less";
 import logo from "../assets/logo.ico";
 import GlobalFooter from "../components/GlobalFooter";
 const RadioGroup = Radio.Group;
@@ -26,7 +26,8 @@ const links = [{
 class LoginForm extends React.Component {
 
   state = {
-    logining: false,
+    confirmDirty: false,
+    submitting: false,
   }
 
   /*登录验证*/
@@ -35,44 +36,56 @@ class LoginForm extends React.Component {
     this.props.form.validateFields((err, values) => {
       if (!err) {
         this.setState({
-          logining: true
+          submitting: true
         });
         $.ajax({
-          url: `/${values.node}/users/login`,
+          url: `/${values.node}/users/registration`,
           type: 'post',
           data: JSON.stringify({
             userID: +values.userID,
-            password: values.password
+            userName: values.userName,
+            password: values.password,
+            email: values.email
           }),
           success: () => {
-            //将用户id和pwd及访问节点存储到localStorage
-            localStorage.clear();
-            localStorage.setItem("userID", values.userID);
-            localStorage.setItem("password", values.password);
-            localStorage.setItem("node", values.node);
+            message.success(`注册成功！即将跳转到登录页面~`, 3, () => { this.props.history.push("/user/login") });
             this.setState({
-              logining: false
-            });
-            this.props.subscribeAuth(true);
-            this.props.history.push("/");
-            location.reload();
-            notification.success({
-              message: "登陆成功！",
-              description: "欢迎访问区块链Demo~",
-              duration: 4.5,
-              icon: <Icon type="smile-circle" style={{ color: '#108ee9' }} />,
+              submitting: false
             });
           },
           error: (err) => {
-            message.error(`登陆失败！用户名或密码错误！${err.status}: ${err.statusText}`);
+            message.error(`注册失败！HIA ${err.status}: ${err.statusText}`);
             this.setState({
-              logining: false
+              submitting: false
             });
           },
         });
       }
     });
   }
+
+  handleConfirmBlur = (e) => {
+    const value = e.target.value;
+    this.setState({ confirmDirty: this.state.confirmDirty || !!value });
+  }
+
+  checkPassword = (rule, value, callback) => {
+    const form = this.props.form;
+    if (value && value !== form.getFieldValue('password')) {
+      callback('两次输入的密码不一致，请重新输入！');
+    } else {
+      callback();
+    }
+  }
+
+  checkConfirm = (rule, value, callback) => {
+    const form = this.props.form;
+    if (value && this.state.confirmDirty) {
+      form.validateFields(['passwordComfirm'], { force: true });
+    }
+    callback();
+  }
+
 
   render() {
     const formItemLayout = {
@@ -98,44 +111,54 @@ class LoginForm extends React.Component {
           <div className={styles.desc}></div>
         </div>
         <div className={styles.main}>
+          <h3>用户注册</h3>
           <Form onSubmit={this.handleSubmit}>
             <FormItem>
-              {getFieldDecorator('userID', {
+              {getFieldDecorator('userName', {
                 rules: [{ required: true, message: '请填写用户名！' }],
               })(
                 <Input size="large" prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="用户名" />
               )}
             </FormItem>
             <FormItem>
+              {getFieldDecorator('userID', {
+                rules: [{ required: true, message: '请填写用户ID！' }],
+              })(
+                <Input size="large" prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="用户ID" />
+              )}
+            </FormItem>
+            <FormItem>
+              {getFieldDecorator('email', {
+                rules: [{ required: true, message: '请填写邮箱地址！' },{ type: 'email', message: '邮箱地址格式错误！', }],
+              })(
+                <Input size="large" prefix={<Icon type="mail" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="邮箱" />
+              )}
+            </FormItem>
+            <FormItem>
               {getFieldDecorator('password', {
-                rules: [{ required: true, message: '请填写密码！' }],
+                rules: [{ required: true, message: '请填写密码！' },{ validator: this.checkConfirm }],
               })(
                 <Input size="large" prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="密码" />
               )}
             </FormItem>
-            <FormItem label="访问节点" {...formItemLayout}>
-              {getFieldDecorator('node', {
-                rules: [{ required: true, message: '请选择要访问的节点！' }],
+            <FormItem>
+              {getFieldDecorator('passwordComfirm', {
+                rules: [{ required: true, message: '请确认密码！' },{ validator: this.checkPassword }],
               })(
-                <RadioGroup>
-                  <Radio value={"a"}>节点A</Radio>
-                  <Radio value={"b"}>节点B</Radio>
-                  <Radio value={"c"}>节点C</Radio>
-                </RadioGroup>
+                <Input size="large" prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} onBlur={this.handleConfirmBlur} type="password" placeholder="确认密码" />
               )}
             </FormItem>
             <FormItem>
-              {getFieldDecorator('remember', {
-                valuePropName: 'checked',
-                initialValue: true,
-              })(
-                <Checkbox>记住密码</Checkbox>
-              )}
-              <a className={styles.forgot_pwd} href="">忘记密码</a>
-              <Button size="large" type="primary" htmlType="submit" className={styles.login_btn} loading={this.state.logining} >
-                {this.state.logining ? '登录中...': '登录'}
-              </Button>
-              或 <Link to="/register">立即注册！</Link>
+              <Button
+                size="large"
+                className={styles.submit}
+                type="primary"
+                htmlType="submit"
+                loading={this.state.submitting}
+              >
+                {this.state.submitting ? '注册中...' : '注册'}
+              </Button> 
+              <Link className = { styles.login } to = "/user/login" >使用已有账户登录 </Link> 
             </FormItem>
           </Form>
         </div>

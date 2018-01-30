@@ -1,8 +1,9 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, Route, Switch, Redirect } from "react-router-dom";
 import { Form, Button, Icon, Input, Checkbox, message, notification, Radio } from "antd";
+import { getRouterData } from "../common/route.js";
 import $ from "jquery";
-import styles from "./LoginLayout.less";
+import styles from "./LoginRegister.less";
 import logo from "../assets/logo.ico";
 import GlobalFooter from "../components/GlobalFooter";
 const RadioGroup = Radio.Group;
@@ -26,7 +27,7 @@ const links = [{
 class LoginForm extends React.Component {
 
   state = {
-    logining: false,
+    submitting: false,
   }
 
   /*登录验证*/
@@ -35,7 +36,7 @@ class LoginForm extends React.Component {
     this.props.form.validateFields((err, values) => {
       if (!err) {
         this.setState({
-          logining: true
+          submitting: true
         });
         $.ajax({
           url: `/${values.node}/users/login`,
@@ -51,7 +52,7 @@ class LoginForm extends React.Component {
             localStorage.setItem("password", values.password);
             localStorage.setItem("node", values.node);
             this.setState({
-              logining: false
+              submitting: false
             });
             this.props.subscribeAuth(true);
             this.props.history.push("/");
@@ -66,7 +67,7 @@ class LoginForm extends React.Component {
           error: (err) => {
             message.error(`登陆失败！用户名或密码错误！${err.status}: ${err.statusText}`);
             this.setState({
-              logining: false
+              submitting: false
             });
           },
         });
@@ -101,9 +102,9 @@ class LoginForm extends React.Component {
           <Form onSubmit={this.handleSubmit}>
             <FormItem>
               {getFieldDecorator('userID', {
-                rules: [{ required: true, message: '请填写用户名！' }],
+                rules: [{ required: true, message: '请填写用户ID！' }],
               })(
-                <Input size="large" prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="用户名" />
+                <Input size="large" prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="用户ID" />
               )}
             </FormItem>
             <FormItem>
@@ -132,10 +133,10 @@ class LoginForm extends React.Component {
                 <Checkbox>记住密码</Checkbox>
               )}
               <a className={styles.forgot_pwd} href="">忘记密码</a>
-              <Button size="large" type="primary" htmlType="submit" className={styles.login_btn} loading={this.state.logining} >
-                {this.state.logining ? '登录中...': '登录'}
+              <Button size="large" type="primary" htmlType="submit" className={styles.login_btn} loading={this.state.submitting} >
+                {this.state.submitting ? '登录中...': '登录'}
               </Button>
-              或 <Link to="/register">立即注册！</Link>
+              或 <Link to="/user/register">立即注册！</Link>
             </FormItem>
           </Form>
         </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message, Divider, Upload, InputNumber } from "antd";
+import { Button, Modal, Table, Row, Col, Icon, Badge, Input, Form, message, Divider, Upload, InputNumber, Tabs } from "antd";
 import $ from "jquery";
 import styles from "./VideoUpload.less";
 import moment from "moment";
@@ -7,6 +7,7 @@ import Clipboard from "clipboard";
 import { userID, password, node } from "../../utils/utils";
 import VideoPlay from "./VideoPlay";
 const FormItem = Form.Item;
+const TabPane = Tabs.TabPane;
 
 class VideoWrapper extends React.Component {
   state = {
@@ -16,6 +17,8 @@ class VideoWrapper extends React.Component {
     publishing: false,
     fileList: [],
     visible: false,
+    visible2: false,
+    tab: 1,
     playVisible: false,
   }
 
@@ -135,6 +138,20 @@ class VideoWrapper extends React.Component {
     });
   }
 
+  showReleaseModal2 = (e, videoID, videoName) => {
+    this.setState({
+      visible2: true,
+      videoID: videoID,
+      videoName: videoName
+    });
+  }
+
+  hideReleaseModal2 = (e) => {
+    this.setState({
+      visible2: false
+    });
+  }
+
   //发布视频
   onReleaseVideo = (e) => {
     e.preventDefault();
@@ -197,6 +214,77 @@ class VideoWrapper extends React.Component {
       }
     });
   }
+
+  //发布视频
+  onReleaseVideo2 = (e) => {
+    e.preventDefault();
+    this.props.form.validateFields(["price"], (err, values) => {
+      if (!err) {
+        const { videoID, videoName, tab } = this.state;
+        this.setState({ publishing: true });
+        if (tab == 1) {
+          //与HIA交互
+          $.ajax({
+            url: `/${node}/videos/${videoID}`,
+            type: 'post',
+            contentType: 'application/json',
+            data: JSON.stringify({
+              "userID": +userID,
+              "password": values.password || password,
+              "videoName": videoName,
+              "price": +values.price
+            }),
+            success: () => {
+              //与CMS交互
+              $.ajax({
+                url: '/action.do',
+                type: 'post',
+                contentType: "application/json",
+                dataType: 'text',
+                data: JSON.stringify({
+                  type: 'publish',
+                  msg: {
+                    msg: {
+                      owner: String(userID),
+                      name: String(videoName)
+                    }
+                  }
+                }),
+                success: () => {
+                  this.getVideos();
+                  this.setState({
+                    visible2: false,
+                    publishing: false,
+                  });
+                  message.success('发布成功！');
+                },
+                error: (err) => {
+                  message.error(`发布失败！CMS 返回${err.status}: ${err.statusText}`, 3);
+                  this.setState({
+                    visible2: false,
+                    publishing: false,
+                  });
+                },
+              });
+            },
+            error: (err) => {
+              message.error(`发布失败！HIA 返回${err.status}: ${err.statusText}`, 3);
+              this.setState({
+                visible2: false,
+                publishing: false,
+              });
+            },
+          });
+        } else {
+          message.info("无交互！");
+          this.setState({
+            publishing: false
+          });
+        }
+      }
+    });
+  }
+
 
   //播放视频
   playVisibleChange = (visible) => {
@@ -269,6 +357,14 @@ class VideoWrapper extends React.Component {
     });
     window.setTimeout(this.getVideos, 1000);
   }
+
+  onTabChange = (tab) => {
+    console.log("tab", tab)
+    this.setState({
+      tab: tab
+    });
+  }
+
   render() {
     const columns = [{
       title: '视频名称',
@@ -289,8 +385,10 @@ class VideoWrapper extends React.Component {
       render: (text, record) => (
         <span>
           <a onClick={()=>{this.onPlayVideo(record)}}>播放</a>
+          {/*<Divider type="vertical" />*/}
+          {/*<a onClick={(e)=>{this.showReleaseModal(e,record.id,record.name)}} disabled={(record.pub==1)}>{record.pub==0?"发布":"已发布"}</a>*/}
           <Divider type="vertical" />
-          <a onClick={(e)=>{this.showReleaseModal(e,record.id,record.name)}} disabled={(record.pub==1)}>{record.pub==0?"发布":"已发布"}</a>
+          <a onClick={(e)=>{this.showReleaseModal2(e,record.id,record.name)}} disabled={(record.pub==1)}>{record.pub==0?"发布":"已发布"}</a>
           {/*<Divider type="vertical" />
           <a onClick={()=>{this.onRemoveVideo(record.name)}} disabled={record.del==1}>{record.del==0?"删除":"已删除"}</a>*/}
         </span>
@@ -328,7 +426,7 @@ class VideoWrapper extends React.Component {
       fileList: this.state.fileList,
     };
     const { getFieldDecorator } = this.props.form;
-    const { loading, uploading, dataSource, visible, publishing } = this.state;
+    const { loading, uploading, dataSource, visible, visible2, publishing } = this.state;
     return (
       <div>
         <Row type={'flex'} justify="center">
@@ -386,6 +484,110 @@ class VideoWrapper extends React.Component {
               )}
             </FormItem>
           </Form>
+        </Modal>
+        <Modal
+          title="视频发布"
+          destroyOnClose
+          visible={visible2}
+          onCancel={this.hideReleaseModal2}
+          onOk={this.onReleaseVideo2}
+          width={650}
+          footer={[
+            <Button key="back" onClick={this.hideReleaseModal2}>取消</Button>,
+            <Button key="submit" type="primary" loading={publishing} onClick={this.onReleaseVideo2}>
+              {publishing ? '发布中' : '发布'}
+            </Button>,
+          ]}
+        >
+          <Tabs defaultActiveKey="1" tabPosition={"left"} onChange={this.onTabChange}>
+            <TabPane tab="普通发布" key="1">
+              <Form>
+                <FormItem
+                  {...formItemLayout}
+                  label="视频定价"
+                >
+                  {getFieldDecorator('price', {
+                    initialValue:0,
+                    rules: [{ required: true, message: '请填写产品定价！' }],
+                  })(
+                    <InputNumber min={0} formatter={value => `￥ ${value}`} style={{width:150+'px'}} />
+                  )}
+                </FormItem>
+              </Form>
+            </TabPane>
+            <TabPane tab="联合广告商发布" key="2">
+              <Form>
+                <FormItem
+                  {...formItemLayout}
+                  label="视频定价"
+                >
+                  {getFieldDecorator('video_price_advertiser', {
+                    initialValue:0,
+                    rules: [{ required: true, message: '请填写产品定价！' }],
+                  })(
+                    <InputNumber min={0} formatter={value => `￥ ${value}`} style={{width:150+'px'}} />
+                  )}
+                </FormItem>
+                <FormItem
+                  {...formItemLayout}
+                  label="广告费"
+                >
+                  {getFieldDecorator('advertiserPrice', {
+                    initialValue:0,
+                    rules: [{ required: true, message: '请填写广告费！' }],
+                  })(
+                    <InputNumber min={0} formatter={value => `￥ ${value}`} style={{width:150+'px'}} />
+                  )}
+                </FormItem>
+                <FormItem
+                  {...formItemLayout}
+                  label="广告方ID"
+                >
+                  {getFieldDecorator('advertiserID', {
+                    rules: [{ required: true, message: '请填写广告方ID！' }],
+                  })(
+                    <Input placeholder="广告方ID" style={{width:200+'px'}} />
+                  )}
+                </FormItem>
+              </Form>
+            </TabPane>
+            <TabPane tab="联合推广商发布" key="3">
+              <Form>
+                <FormItem
+                  {...formItemLayout}
+                  label="视频定价"
+                >
+                  {getFieldDecorator('video_price_promoter', {
+                    initialValue:0,
+                    rules: [{ required: true, message: '请填写产品定价！' }],
+                  })(
+                    <InputNumber min={0} formatter={value => `￥ ${value}`} style={{width:150+'px'}} />
+                  )}
+                </FormItem>
+                <FormItem
+                  {...formItemLayout}
+                  label="推广费"
+                >
+                  {getFieldDecorator('promoterPrice', {
+                    initialValue:0,
+                    rules: [{ required: true, message: '请填写推广费！' }],
+                  })(
+                    <InputNumber min={0} formatter={value => `￥ ${value}`} style={{width:150+'px'}} />
+                  )}
+                </FormItem>
+                <FormItem
+                  {...formItemLayout}
+                  label="推广方ID"
+                >
+                  {getFieldDecorator('promoterID', {
+                    rules: [{ required: true, message: '请填写推广方ID！' }],
+                  })(
+                    <Input placeholder="推广方ID" style={{width:200+'px'}} />
+                  )}
+                </FormItem>
+              </Form>
+            </TabPane>
+          </Tabs>
         </Modal>
       </div>
     );

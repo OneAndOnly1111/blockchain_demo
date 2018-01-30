@@ -13,6 +13,11 @@ const menuData = [{
   icon: 'pay-circle-o',
   path: 'video/purchased',
   hideInMenu: false,
+}, {
+  name: '存储收益',
+  icon: 'wallet',
+  path: 'video/storage',
+  hideInMenu: false,
 }];
 
 function formatter(data, parentPath = '', parentAuthority) {
